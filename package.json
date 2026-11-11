@@ -13,9 +13,9 @@
   ],
   "scripts": {
     "build:shared": "npm run build -w @podrida/shared",
-    "dev": "npm run build:shared && concurrently -k -n shared,backend,frontend -c gray,cyan,magenta \"npm run dev -w @podrida/shared\" \"npm run dev -w @podrida/backend\" \"npm run dev -w @podrida/frontend\"",
     "dev:backend": "npm run build:shared && npm run dev -w @podrida/backend",
     "dev:frontend": "npm run build:shared && npm run dev -w @podrida/frontend",
+    "dev:shared": "npm run dev -w @podrida/shared",
     "build": "npm run build --workspaces --if-present",
     "build:backend": "npm run build:shared && npm run build -w @podrida/backend",
     "build:frontend": "npm run build:shared && npm run build -w @podrida/frontend",
@@ -27,7 +27,6 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
     "prettier": "^3.9.9"
   },
   "overrides": {

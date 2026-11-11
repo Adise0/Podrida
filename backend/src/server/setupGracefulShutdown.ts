@@ -27,6 +27,9 @@ const setupGracefulShutdown = (server: Server) => {
     try {
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
+        // Keep-alive connections with no request running (an open browser tab) would otherwise hold
+        // the close until the forced exit. The ones mid-request finish first, and close after.
+        server.closeIdleConnections();
       });
       await mongoose.disconnect();
       process.exit(0);

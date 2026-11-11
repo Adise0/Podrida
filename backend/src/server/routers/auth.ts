@@ -19,7 +19,6 @@ import duplicateKeyChecker from "../middlewares/auth/duplicateKeyChecker";
 import resolveRegistrationConflict from "../middlewares/auth/resolveRegistrationConflict";
 import keyCheckerDataValidator from "../middlewares/requestPayloadValidators/keyCheckerDataValidator";
 import signedIdTokenValidator from "../middlewares/auth/signedIdTokenValidator";
-import tokenParamToBody from "../middlewares/auth/tokenParamToBody";
 import activateUser from "../controllers/auth/activateUser";
 import cancelRegistration from "../controllers/auth/cancelRegistration";
 import resendActivation from "../controllers/auth/resendActivation";
@@ -56,7 +55,7 @@ const routerEndpoints = endpoints.auth;
 // placed first - so hitting a real endpoint with the wrong verb returns a clear 405 "this
 // endpoint only accepts X" instead of Express falling through to the generic 404 handler.
 // (.use() was considered, but it does PREFIX matching - "/activate" would also swallow
-// "/activate/:token" below - so .all() is the right primitive here, not .use().)
+// "/activate/anything" - so .all() is the right primitive here, not .use().)
 
 authRouter.all(
   routerEndpoints.login,
@@ -106,27 +105,6 @@ authRouter.all(
   cancelRegistration,
 );
 
-// DEBUG: lets the email links hit these directly via a plain GET, with no frontend page in
-// between. Remove once a real frontend takes over calling the POST routes above.
-authRouter.all(
-  `${routerEndpoints.activate}/:token`,
-  method(Methods.GET),
-  tokenParamToBody,
-  signedTokenDataValidator,
-  signedIdTokenValidator(TokenPurpose.activation),
-  activateUser,
-  sendToken,
-);
-
-authRouter.all(
-  `${routerEndpoints.cancelRegistration}/:token`,
-  method(Methods.GET),
-  tokenParamToBody,
-  signedTokenDataValidator,
-  signedIdTokenValidator(TokenPurpose.activation),
-  cancelRegistration,
-);
-
 authRouter.all(
   routerEndpoints.resendActivation,
   method(Methods.POST),
@@ -151,16 +129,6 @@ authRouter.all(
   revokeOtp,
 );
 
-// DEBUG: see note above - plain GET variant for the email link until a frontend exists.
-authRouter.all(
-  `${routerEndpoints.revokeOtp}/:token`,
-  method(Methods.GET),
-  tokenParamToBody,
-  signedTokenDataValidator,
-  signedIdTokenValidator(TokenPurpose.otpRevoke),
-  revokeOtp,
-);
-
 authRouter.all(
   routerEndpoints.requestPasswordReset,
   method(Methods.POST),
@@ -180,17 +148,6 @@ authRouter.all(
 authRouter.all(
   routerEndpoints.cancelPasswordReset,
   method(Methods.POST),
-  signedTokenDataValidator,
-  signedIdTokenValidator(TokenPurpose.passwordReset),
-  cancelPasswordReset,
-);
-
-// DEBUG: see note above - plain GET variant for the email link until a frontend exists.
-// (No GET variant for resetPassword itself, since it needs the new password in the body.)
-authRouter.all(
-  `${routerEndpoints.cancelPasswordReset}/:token`,
-  method(Methods.GET),
-  tokenParamToBody,
   signedTokenDataValidator,
   signedIdTokenValidator(TokenPurpose.passwordReset),
   cancelPasswordReset,

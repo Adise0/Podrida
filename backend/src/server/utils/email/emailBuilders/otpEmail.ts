@@ -2,7 +2,7 @@ import {
   otpExpirationInMinutes,
   otpMaxAttempts,
 } from "../../../../data/serverConfig/server-config";
-import getBaseEmail, { code, debugLink, notYou, paragraph, smallText } from "./baseEmail";
+import getBaseEmail, { code, notYou, paragraph, smallText } from "./baseEmail";
 
 const getOtpEmail = (otp: string, otpRevokeToken: string) =>
   getBaseEmail(
@@ -16,8 +16,7 @@ const getOtpEmail = (otp: string, otpRevokeToken: string) =>
       "Someone may be trying to get into your account. Revoke the code so it can't be used.",
       `${process.env.FRONTEND_URL}/auth/revokeOtp/${otpRevokeToken}`,
       "Revoke this code",
-    )}
-    ${debugLink(`${process.env.BACKEND_URL}/auth/revokeOtp/${otpRevokeToken}`)}`,
+    )}`,
   );
 
 export default getOtpEmail;

@@ -42,13 +42,6 @@ export const notYou = (text: string, href: string, label: string) => `
   ${paragraph(`<strong>Wasn't you?</strong> ${text}`)}
   <p style="margin: 0 0 16px;"><a href="${href}" style="color: ${colors.accent}; font-size: 14px;">${label}</a></p>`;
 
-// DEBUG: a link straight to the API, for testing without a frontend. Remove every use of it before
-// going live (see SECURITY_SETTINGS.md): email scanners open links, and these act on a plain GET.
-export const debugLink = (href: string) =>
-  smallText(
-    `Debug, no frontend yet: <a href="${href}" style="color: ${colors.muted};">hit the API directly</a>`,
-  );
-
 const getBaseEmail = (title: string, content: string) => `<!doctype html>
 <html>
   <head>

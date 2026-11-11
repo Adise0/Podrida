@@ -1,7 +1,7 @@
 // This file contains the basic configuration parameters of the server
 
 // The product's name, as users see it: in every email, and next to the code in authenticator apps.
-export const appName = "user-template";
+export const appName = "Podrida";
 
 // USER SETTINGS
 
