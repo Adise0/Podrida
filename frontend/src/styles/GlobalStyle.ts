@@ -26,6 +26,18 @@ export const GlobalStyle = createGlobalStyle`
     -webkit-font-smoothing: antialiased;
   }
 
+  /* The wool felt texture, over the color above and under everything else (z-index -1 still paints
+     above the page's own background). Fixed, so it doesn't scroll or repeat on long pages. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: url("/img/wool_texture.webp") center / cover no-repeat;
+    opacity: 0.1;
+    pointer-events: none;
+  }
+
   h1, h2, h3 {
     margin: 0;
     font-family: ${({ theme }) => theme.fonts.display};
