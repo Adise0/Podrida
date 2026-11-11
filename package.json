@@ -14,7 +14,12 @@
   "scripts": {
     "build:shared": "npm run build -w @podrida/shared",
     "dev": "npm run build:shared && concurrently -k -n shared,backend,frontend -c gray,cyan,magenta \"npm run dev -w @podrida/shared\" \"npm run dev -w @podrida/backend\" \"npm run dev -w @podrida/frontend\"",
+    "dev:backend": "npm run build:shared && npm run dev -w @podrida/backend",
+    "dev:frontend": "npm run build:shared && npm run dev -w @podrida/frontend",
     "build": "npm run build --workspaces --if-present",
+    "build:backend": "npm run build:shared && npm run build -w @podrida/backend",
+    "build:frontend": "npm run build:shared && npm run build -w @podrida/frontend",
+    "start:backend": "npm run start -w @podrida/backend",
     "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
     "lint": "npm run build:shared && npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
