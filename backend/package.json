@@ -13,7 +13,7 @@
     "testCov": "jest --watchAll --coverage",
     "build": "tsc",
     "start": "node .",
-    "dev": "nodemon -q ./src/index.ts",
+    "dev": "nodemon -q --watch src --watch ../shared/dist ./src/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
