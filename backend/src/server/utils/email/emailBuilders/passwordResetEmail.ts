@@ -1,5 +1,5 @@
 import { passwordResetExpirationInMinutes } from "../../../../data/serverConfig/server-config";
-import getBaseEmail, { button, debugLink, notYou, paragraph, smallText } from "./baseEmail";
+import getBaseEmail, { button, notYou, paragraph, smallText } from "./baseEmail";
 
 // The reset and the "wasn't you?" cancel link share the same token: the endpoint decides.
 const getPasswordResetEmail = (resetPasswordToken: string) =>
@@ -12,8 +12,7 @@ const getPasswordResetEmail = (resetPasswordToken: string) =>
       "Your password hasn't changed. Cancel the request and this link stops working.",
       `${process.env.FRONTEND_URL}/auth/cancelPasswordReset/${resetPasswordToken}`,
       "Cancel this password reset",
-    )}
-    ${debugLink(`${process.env.BACKEND_URL}/auth/cancelPasswordReset/${resetPasswordToken}`)}`,
+    )}`,
   );
 
 export default getPasswordResetEmail;

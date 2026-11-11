@@ -1,0 +1,29 @@
+{
+  "folders": [
+    { "name": "Root", "path": "." },
+    { "name": "Shared", "path": "shared" },
+    { "name": "Front", "path": "frontend" },
+    { "name": "Back", "path": "backend" },
+  ],
+  "settings": {
+    // Hide the package folders under "Root" so each file shows up only once in the explorer.
+    // Patterns are relative to each folder, and no package has top-level folders with these names.
+    "files.exclude": {
+      "backend": true,
+      "frontend": true,
+      "shared": true,
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/coverage": true,
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "eslint.workingDirectories": [{ "mode": "auto" }],
+  },
+  "extensions": {
+    "recommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint", "oxc.oxc-vscode"],
+  },
+}

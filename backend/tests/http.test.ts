@@ -6,7 +6,7 @@ useApi();
 
 describe("errors", () => {
   test("a malformed URL param is a 400", async () => {
-    const { status, json } = await call("GET", "/auth/activate/%E0%A4%A");
+    const { status, json } = await call("GET", "/auth/oauth/%E0%A4%A/authorizationUrl");
 
     expect(status).toBe(400);
     expect(json.code).toBe("BAD_REQUEST");

@@ -12,5 +12,5 @@
       "*": ["node_modules/*"]
     }
   },
-  "include": ["src/**/*", "src/index.ts"]
+  "include": ["src/**/*", "src/index.ts", "TokenPayload.ts"]
 }

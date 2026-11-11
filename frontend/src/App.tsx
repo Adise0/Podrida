@@ -1,25 +1,18 @@
-import { endpoints } from "@podrida/shared";
-import { useEffect, useState } from "react";
-import { api } from "./api/client";
-import "./App.css";
-
-type Status = "checking" | "online" | "offline";
+import { RouterProvider } from "react-router";
+import { ThemeProvider } from "styled-components";
+import { router } from "./router/routes";
+import { AppStoresProvider } from "./stores/AppStoresProvider";
+import { GlobalStyle } from "./styles/GlobalStyle";
+import { theme } from "./styles/theme";
 
 function App() {
-  const [status, setStatus] = useState<Status>("checking");
-
-  useEffect(() => {
-    // The path comes from @podrida/shared: if the backend renames it, this stops compiling.
-    api(endpoints.health.path)
-      .then(() => setStatus("online"))
-      .catch(() => setStatus("offline"));
-  }, []);
-
   return (
-    <main>
-      <h1>Podrida</h1>
-      <p>Server: {status}</p>
-    </main>
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <AppStoresProvider>
+        <RouterProvider router={router} />
+      </AppStoresProvider>
+    </ThemeProvider>
   );
 }
 

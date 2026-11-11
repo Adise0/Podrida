@@ -15,7 +15,7 @@ This is a workspace of the Podrida monorepo: run `npm install` once at the repo 
 
 ```sh
 cp .env.example .env   # Then fill it in
-npm run dev            # From here: just the API. From the root: everything
+npm run dev            # From here: just the API. From the root: npm run dev:backend
 ```
 
 The API runs on `http://localhost:4000` by default. To check it's up, open `/health`.
@@ -57,7 +57,7 @@ The server checks these at startup and refuses to start if one is missing or inv
 | `EMAIL`          | Yes      | SMTP username                                                                                               |
 | `EMAIL_PASSWORD` | Yes      | SMTP password                                                                                               |
 | `FRONTEND_URL`   | Yes      | The frontend: base of the email links and of OAuth redirects, and the default CORS origin                   |
-| `BACKEND_URL`    | Yes      | This API's public URL: base of the debug email links and of Apple's sign-in callback                        |
+| `BACKEND_URL`    | Yes      | This API's public URL: base of Apple's sign-in callback                                                     |
 | `SMTP_PORT`      | No       | `465` (TLS, the default) or `587` (STARTTLS, required)                                                      |
 | `EMAIL_ALIAS`    | No       | The "from" address, defaults to `EMAIL`                                                                     |
 | `CORS_ORIGINS`   | No       | Comma-separated browser origins allowed to call the API, defaults to `FRONTEND_URL`                         |

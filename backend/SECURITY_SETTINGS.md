@@ -15,11 +15,12 @@ what to change when those assumptions don't hold, and the trade-offs the templat
 
 ## Before going live
 
-- [ ] **Remove the debug routes and the debug links in the emails.** Search for `DEBUG` in `src/`.
-      They're plain `GET` links that act as soon as they're opened, and email scanners (Outlook Safe
-      Links, Gmail, corporate gateways) open every link in an email: they'd activate accounts,
-      cancel registrations and revoke codes on their own. Your frontend's pages for those links
-      should also wait for a click before calling the API, for the same reason.
+- [x] **Remove the debug routes and the debug links in the emails.** Done: the emails only link to
+      the frontend, and the API's email-link endpoints are `POST` only. Plain `GET` links that act
+      as soon as they're opened are dangerous, because email scanners (Outlook Safe Links, Gmail,
+      corporate gateways) open every link in an email: they'd activate accounts, cancel
+      registrations and revoke codes on their own. For the same reason the frontend's pages for
+      those links wait for a click before calling the API (`frontend/src/hooks/useEmailLinkAction.ts`).
 - [ ] **Generate a real `TOKEN_SECRET`**, one per environment, never reused:
       `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`. It signs every
       token and encrypts the 2FA secrets, see

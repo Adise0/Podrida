@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "user-template API",
+    "name": "Podrida API",
     "description": "Every endpoint of the API, in the same structure as the routes.\n\n**Setup** (see postman/README.md in the repo):\n1. Postman Vault > settings: enable **support in Postman scripts**, and allow this collection.\n2. Add vault secrets `loginEmail` (your email, also used to register), `loginPassword` (also the password you register with) and `newPassword` (used by Change password and Reset password), and set the `registerUsername` collection variable.\n3. Run **Auth > Login**. The session token is stored in the vault as `authToken`.\n\nAuthed requests inherit the collection's Bearer auth (`{{vault:authToken}}`). Public ones are set to No Auth. The token is refreshed automatically when it's past half its life, so it only needs a new login after 2 hours idle.\n\nRequests that come from an email link use the `linkToken` variable: paste the last part of the link into it.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
