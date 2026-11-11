@@ -1,0 +1,33 @@
+{
+  "name": "podrida",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Podrida: a browser card game. Express + MongoDB backend, Vite + React frontend, one shared TypeScript contract.",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w @podrida/shared",
+    "dev": "npm run build:shared && concurrently -k -n shared,backend,frontend -c gray,cyan,magenta \"npm run dev -w @podrida/shared\" \"npm run dev -w @podrida/backend\" \"npm run dev -w @podrida/frontend\"",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
+    "lint": "npm run build:shared && npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prettier": "^3.9.9"
+  },
+  "overrides": {
+    "eslint-config-airbnb-extended": {
+      "eslint": "^10.12.0"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+# Podrida
+
+A browser card game. One repo, three npm workspaces:
+
+| Folder      | What it is                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| `backend/`  | Express 5 + MongoDB API: accounts, auth, sessions, admin tools (and, soon, the game server) |
+| `frontend/` | Vite + React + TypeScript app                                                               |
+| `shared/`   | `@podrida/shared`: the contract both sides agree on (endpoint paths, error codes, types)    |
+
+The backend started from the [User-template](https://github.com/Adise0/User-template). Its own
+docs (every endpoint, environment variables, security notes) are in [backend/README.md](backend/README.md).
+
+## Getting started
+
+You need Node.js 24 or newer, a MongoDB database and an SMTP account.
+
+```sh
+npm install                          # Once, at the repo root: installs all three workspaces
+cp backend/.env.example backend/.env   # Then fill it in
+npm run dev
+```
+
+`npm run dev` builds `shared/` and then runs, side by side, `shared` in watch mode, the API on
+http://localhost:4000 and the frontend on http://localhost:3000. Port 3000 is what the backend
+expects as `FRONTEND_URL` by default. If the API isn't on port 4000, set `VITE_API_URL` in
+`frontend/.env` (see `frontend/.env.example`).
+
+## Scripts (run from the root)
+
+| Script                 | What it does                                                  |
+| ---------------------- | ------------------------------------------------------------- |
+| `npm run dev`          | Builds `shared`, then runs shared, backend and frontend       |
+| `npm run build`        | Builds all three, in order                                    |
+| `npm run build:shared` | Builds only `shared` (the others need it built)               |
+| `npm run typecheck`    | Typechecks every workspace                                    |
+| `npm run lint`         | Lints every workspace                                         |
+| `npm test`             | Runs the backend tests (in-memory MongoDB, nothing to set up) |
+| `npm run format`       | Formats everything with Prettier (`format:check` only checks) |
+
+Run a script in one workspace with `npm run <script> -w @podrida/backend` (or `frontend`, `shared`).
+
+## Sharing code between backend and frontend
+
+Put anything both sides must agree on in `shared/src` and export it from `shared/src/index.ts`:
+
+```ts
+// Backend or frontend
+import { endpoints, ErrorCode, type ResponseError } from "@podrida/shared";
+```
+
+`shared` is compiled to `dist/` (CommonJS for the backend, ESM for the frontend), so after changing
+it either keep `npm run dev` running (it rebuilds on every change) or run `npm run build:shared`.
+Keep it free of Node-only and browser-only code.
+
+For example, the API's error codes live there: the frontend switches on `ErrorCode`, never on
+messages, and the backend can't rename a code without the frontend noticing at compile time.
+
+## CI
+
+GitHub Actions run on pushes to `main` and on pull requests, only when something relevant changed:
+
+- `.github/workflows/backend.yml`: for `backend/**` and `shared/**`. Typechecks, lints, checks formatting and runs the tests.
+- `.github/workflows/frontend.yml`: for `frontend/**` and `shared/**`. Lints and builds.
+
+A change to `shared/` runs both, since both depend on it.
