@@ -40,6 +40,26 @@ expects as `FRONTEND_URL` by default. If the API isn't on port 4000, set `VITE_A
 
 Run a script in one workspace with `npm run <script> -w @podrida/backend` (or `frontend`, `shared`).
 
+## Running and deploying each side
+
+| Script                   | What it does                                                    |
+| ------------------------ | --------------------------------------------------------------- |
+| `npm run dev:backend`    | Builds `shared`, then runs only the API                         |
+| `npm run dev:frontend`   | Builds `shared`, then runs only the frontend                    |
+| `npm run build:backend`  | Builds `shared`, then compiles the backend                      |
+| `npm run build:frontend` | Builds `shared`, then bundles the frontend into `frontend/dist` |
+| `npm run start:backend`  | Starts the compiled API (run `build:backend` first)             |
+
+There is no single deploy command: the two sides deploy to different places. Whatever the host,
+install at the **repo root** (`npm ci`), because both sides need `shared/`.
+
+- **Backend** (any Node host): build with `npm run build:backend`, start with
+  `npm run start:backend`, and set the environment variables from `backend/.env.example`. Or use the
+  `Dockerfile` at the root, built from the root: `docker build -t podrida-backend .`
+- **Frontend** (static host such as Vercel, Netlify or Cloudflare Pages): build with
+  `npm run build:frontend`, publish `frontend/dist`, and set `VITE_API_URL` to the production API URL.
+  Add the frontend's URL to the backend's `FRONTEND_URL` (or `CORS_ORIGINS`).
+
 ## Sharing code between backend and frontend
 
 Put anything both sides must agree on in `shared/src` and export it from `shared/src/index.ts`:
