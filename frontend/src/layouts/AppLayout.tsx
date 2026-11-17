@@ -1,6 +1,7 @@
 import { UserRole } from "@podrida/shared";
 import { NavLink, Outlet } from "react-router";
 import styled from "styled-components";
+import { Avatar } from "../components/Avatar";
 import { Brand } from "../components/Brand";
 import { Button } from "../components/ui/Button";
 import { useRequest } from "../hooks/useRequest";
@@ -93,6 +94,9 @@ export function AppLayout() {
             {user && adminRoles.includes(user.role) && <NavItem to="/admin">Admin</NavItem>}
           </Nav>
           <Account>
+            {user && (
+              <Avatar src={user.avatarUrl} name={user.information.username} size={28} decorative />
+            )}
             <span>{user?.information.username}</span>
             <Button variant="ghost" small onClick={() => signOut.run()} loading={signOut.isPending}>
               Log out

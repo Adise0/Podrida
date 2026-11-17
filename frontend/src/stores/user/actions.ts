@@ -1,4 +1,4 @@
-import type { MyUser, UpdateProfileData } from "@podrida/shared";
+import type { AvatarUpload, MyUser, UpdateProfileData } from "@podrida/shared";
 import { usersApi } from "../../api/users";
 import { dispatcher } from "../../flux/dispatcher";
 
@@ -16,6 +16,18 @@ export async function loadMyUser() {
 export async function updateMyProfile(data: UpdateProfileData) {
   const { information } = await usersApi.updateMyUser(data);
   dispatcher.dispatch({ type: "USER_UPDATED", changes: { information } });
+}
+
+// null removes it.
+export async function updateMyAvatar(upload: AvatarUpload | null) {
+  if (upload) {
+    const { avatarUrl } = await usersApi.updateMyAvatar(upload);
+    dispatcher.dispatch({ type: "USER_UPDATED", changes: { avatarUrl } });
+    return;
+  }
+
+  await usersApi.deleteMyAvatar();
+  dispatcher.dispatch({ type: "USER_UPDATED", changes: { avatarUrl: undefined } });
 }
 
 // For changes made through other endpoints (eg. setting a password) that don't answer the user.

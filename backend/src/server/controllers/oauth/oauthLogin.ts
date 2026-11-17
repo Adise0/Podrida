@@ -78,6 +78,7 @@ const oauthLogin = async (req: Request, res: Response, next: NextFunction) => {
       email: identity.email,
       firstName: identity.firstName,
       lastName: identity.lastName,
+      pictureUrl: identity.pictureUrl,
     });
   } catch (error) {
     next(error);

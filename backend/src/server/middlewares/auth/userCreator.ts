@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import hashPassword from "../../utils/auth/hashPassword";
+import { getAvatarFields } from "../../utils/users/avatar";
 import RegistrationData from "../../../types/userTypes/RegistrationData";
 import { CreatedUserData } from "../../../types/userTypes/UserData";
 
 const createUser = async (req: Request, res: Response, next: NextFunction) => {
   // Get the Registration data from the request body object.
-  const { email, firstName, lastName, password, username }: RegistrationData = req.body;
+  const { email, firstName, lastName, password, username, avatar }: RegistrationData = req.body;
 
   try {
     const hashedPassword = await hashPassword(password); // Hash the new user's password.
@@ -27,6 +28,8 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
         email,
         password: hashedPassword,
       },
+
+      ...(avatar && getAvatarFields(avatar)),
     };
 
     // Replace the req.body with the new user object and go next.

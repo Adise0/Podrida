@@ -204,6 +204,28 @@ server-config.ts to remove the feature: the endpoints answer `404` and logins ne
 `GET /users/myUser` includes `hasPassword`, `linkedProviders` and `twoFactorEnabled` for a settings
 page.
 
+### Avatars
+
+Avatars are cropped in the browser. The API stores two pictures, both sent as PNG, JPEG or WebP
+data URLs: `image`, the square avatar everyone sees (the frontend shows it in a circle), and
+`source`, the downscaled original it was cut from. It also stores `crop` (`{ x, y, zoom }`), so the
+avatar can be re-framed later. `avatarLimits` in `@podrida/shared` sets the sizes. The API checks
+that each file really is the format it claims to be. It doesn't decode them.
+
+| Endpoint                        | Does                                                        |
+| ------------------------------- | ----------------------------------------------------------- |
+| `PUT /users/myUser/avatar`      | Sets it: `{ image, source, crop }`, answers `{ avatarUrl }` |
+| `GET /users/myUser/avatar`      | The `source` and `crop`, to re-frame it                     |
+| `DELETE /users/myUser/avatar`   | Removes it                                                  |
+| `GET /users/avatars/:userId?v=` | The image itself. Public, so an `<img>` can load it         |
+
+`POST /auth/register` and `POST /auth/oauth/completeSignup` take the same object as an optional
+`avatar`. `GET /users/myUser` answers an `avatarUrl` path that changes with each new avatar, so
+it's cached for good. A first OAuth sign-in answers the provider's `pictureUrl` (Google only), which
+the frontend can offer as the avatar. The files are stored on the user document but no query loads
+them unless it asks (`select: false`). They're deleted along with the account, pending accounts
+included.
+
 ### Email links
 
 Each email link is a signed token for one purpose, and it only works on the matching endpoint. The

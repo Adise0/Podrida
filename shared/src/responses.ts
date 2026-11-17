@@ -1,6 +1,6 @@
 // What the API answers on success, endpoint by endpoint. Error answers are always a ResponseError
 // (see errors.ts).
-import type { MyUser } from "./user";
+import type { AvatarCrop, AvatarUpload, MyUser } from "./user";
 
 // Most endpoints that only do something answer with a human-readable message.
 export interface MessageResponse {
@@ -29,6 +29,7 @@ export interface OAuthSignupRequiredResponse {
   email: string;
   firstName?: string;
   lastName?: string;
+  pictureUrl?: string; // The provider's profile picture, to offer it as the avatar.
 }
 
 export type OAuthLoginResponse = LoginResponse | OAuthSignupRequiredResponse;
@@ -51,6 +52,7 @@ export interface OAuthSignupData {
   username: string;
   firstName?: string;
   lastName?: string;
+  avatar?: AvatarUpload;
 }
 
 export interface TwoFactorSetupResponse {
@@ -83,4 +85,15 @@ export interface UpdateProfileResponse {
 export interface ChangePasswordData {
   password: string;
   signOutOtherSessions?: boolean; // Defaults to true.
+}
+
+// PUT /users/myUser/avatar.
+export interface UpdateAvatarResponse {
+  avatarUrl: string;
+}
+
+// GET /users/myUser/avatar: what the avatar was cut from, to re-frame it.
+export interface AvatarSourceResponse {
+  source: string; // A data URL.
+  crop: AvatarCrop;
 }

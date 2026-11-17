@@ -10,6 +10,7 @@ import metrics from "./middlewares/metrics";
 import normalizeBody from "./middlewares/normalizeBody";
 import mainRouter from "./routers";
 import { endpoints } from "../data/serverConfig/endpoints";
+import { avatarRequestBodyLimit } from "../data/serverConfig/server-config";
 import logger, { maskTokensInUrl } from "./utils/logger";
 
 // Keeps the id a proxy may have already assigned, so a request can be followed across services.
@@ -60,6 +61,16 @@ app.use(
 );
 app.use(metrics);
 app.use(helmet());
+// The requests that can carry an avatar get a bigger body. The second parser skips a body the
+// first one already read.
+app.use(
+  [
+    `${endpoints.auth.path}${endpoints.auth.register}`,
+    `${endpoints.oauth.path}${endpoints.oauth.completeSignup}`,
+    `${endpoints.users.path}${endpoints.users.myAvatar}`,
+  ],
+  express.json({ limit: avatarRequestBodyLimit }),
+);
 app.use(express.json());
 app.use(normalizeBody);
 

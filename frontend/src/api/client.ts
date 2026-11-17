@@ -61,7 +61,7 @@ export function setSessionHandlers(handlers: SessionHandlers) {
 type QueryValue = string | number | boolean | undefined;
 
 export interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   query?: Record<string, QueryValue>;
   // Sends the current session token. A 401/403 on it is handled here (see SessionHandlers).

@@ -31,6 +31,7 @@ export enum ErrorCode {
   ACCOUNT_NOT_ACTIVATED = "ACCOUNT_NOT_ACTIVATED",
   ACCOUNT_ALREADY_ACTIVATED = "ACCOUNT_ALREADY_ACTIVATED",
   PASSWORD_RESET_REQUIRED = "PASSWORD_RESET_REQUIRED", // An admin forced it: the emailed link is the only way in.
+  AVATAR_NOT_FOUND = "AVATAR_NOT_FOUND", // The user has no avatar.
 
   // Registration
   DUPLICATE_KEY = "DUPLICATE_KEY", // See "fields" for which of email/username is TAKEN.

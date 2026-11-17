@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { JoiName, JoiPassword, JoiUsername } from "./joiTypes";
+import { JoiAvatarUpload, JoiName, JoiPassword, JoiUsername } from "./joiTypes";
 
 const registrationData = Joi.object({
   firstName: JoiName().required().messages({
@@ -20,6 +20,8 @@ const registrationData = Joi.object({
     "string.email": "Invalid email",
     "any.required": "Missing email",
   }),
+
+  avatar: JoiAvatarUpload(),
 });
 
 export default registrationData;

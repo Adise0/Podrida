@@ -1,5 +1,8 @@
+import type { AvatarUpload } from "@podrida/shared";
 import { useState, type FormEvent } from "react";
 import { authApi } from "../../api/auth";
+import { usersApi } from "../../api/users";
+import { AvatarPicker } from "../../components/AvatarPicker";
 import { ErrorAlert } from "../../components/ErrorAlert";
 import { PageTitle } from "../../components/PageTitle";
 import { ProfileForm } from "../../components/ProfileForm";
@@ -9,8 +12,10 @@ import { Card, CardHeader } from "../../components/ui/Card";
 import { TextField } from "../../components/ui/Field";
 import { Form, Row, Stack } from "../../components/ui/layout";
 import { useRequest } from "../../hooks/useRequest";
+import { getDisplayName } from "../../lib/format";
 import { validateEmail } from "../../lib/validation";
-import { updateMyProfile } from "../../stores/user/actions";
+import { notify } from "../../stores/notifications/actions";
+import { updateMyAvatar, updateMyProfile } from "../../stores/user/actions";
 import { useUser } from "../../stores/user/store";
 import { PageHeading } from "./PageHeading";
 
@@ -75,6 +80,11 @@ function EmailCard({ currentEmail }: { currentEmail: string }) {
   );
 }
 
+async function saveAvatar(upload: AvatarUpload | null) {
+  await updateMyAvatar(upload);
+  notify(upload ? "Picture saved." : "Picture removed.", "success");
+}
+
 export function ProfilePage() {
   const { user } = useUser();
   if (!user) return null;
@@ -86,12 +96,21 @@ export function ProfilePage() {
 
       <Card>
         <CardHeader title="Profile" />
-        {/* Keyed so the form starts over when the saved profile changes (eg. from another tab). */}
-        <ProfileForm
-          key={JSON.stringify(user.information)}
-          information={user.information}
-          onSave={updateMyProfile}
-        />
+        <Stack $gap={6}>
+          <AvatarPicker
+            imageUrl={user.avatarUrl}
+            name={getDisplayName(user.information) || user.information.username}
+            onChange={saveAvatar}
+            loadSavedSource={usersApi.getMyAvatarSource}
+            hint="Shown in a circle next to your name. Saved as soon as you pick it."
+          />
+          {/* Keyed so the form starts over when the saved profile changes (eg. from another tab). */}
+          <ProfileForm
+            key={JSON.stringify(user.information)}
+            information={user.information}
+            onSave={updateMyProfile}
+          />
+        </Stack>
       </Card>
 
       <EmailCard currentEmail={user.information.email} />

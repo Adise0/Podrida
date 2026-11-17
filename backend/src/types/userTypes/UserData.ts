@@ -1,3 +1,5 @@
+import DatabaseUserData from "./DatabaseUserData";
+
 // This is a type for the user you want to manage internally, independent of the database schema
 interface UserData {
   id?: string;
@@ -13,7 +15,10 @@ interface UserData {
   isVerified: boolean;
 }
 
-export interface CreatedUserData {
+// The avatar fields are only there when the registration came with one.
+export interface CreatedUserData extends Partial<
+  Pick<DatabaseUserData, "avatar" | "avatarImage" | "avatarSource">
+> {
   _id?: string;
   information: {
     firstName?: string;
@@ -32,4 +37,5 @@ export interface CreatedUserData {
   isDisabled: boolean;
   resetPasswordOnLogin: boolean;
 }
+
 export default UserData;

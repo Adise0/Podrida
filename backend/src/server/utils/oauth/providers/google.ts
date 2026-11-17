@@ -53,6 +53,10 @@ const google: OAuthProvider = {
       emailVerified: payload.email_verified === true,
       firstName: payload.given_name,
       lastName: payload.family_name,
+      pictureUrl:
+        typeof payload.picture === "string" && payload.picture.startsWith("https://")
+          ? payload.picture
+          : undefined,
     };
   },
 };

@@ -47,6 +47,8 @@ export const twoFactorEndpoints = <const>{
 export const userEndpoints = <const>{
   path: "/users",
   myUser: "/myUser",
+  myAvatar: "/myUser/avatar", // GET (the source, to re-frame it), PUT and DELETE.
+  avatar: "/avatars/:userId", // Public: the avatar image itself.
 };
 
 export const adminEndpoints = <const>{

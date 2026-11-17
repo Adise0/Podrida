@@ -1,7 +1,9 @@
+import type { AvatarUpload } from "@podrida/shared";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { authApi } from "../../api/auth";
-import { getFieldErrors } from "../../api/errorMessages";
+import { getAvatarFieldError, getFieldErrors } from "../../api/errorMessages";
+import { AvatarPicker } from "../../components/AvatarPicker";
 import { ErrorAlert } from "../../components/ErrorAlert";
 import { OAuthButtons } from "../../components/OAuthButtons";
 import { PageTitle } from "../../components/PageTitle";
@@ -35,6 +37,7 @@ const emptyForm: Record<Field, string> = {
 export function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState(emptyForm);
+  const [avatar, setAvatar] = useState<AvatarUpload | null>(null);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
 
   const usernameAvailability = useKeyAvailability(
@@ -56,6 +59,7 @@ export function RegisterPage() {
       username: form.username,
       email,
       password: form.password,
+      avatar: avatar ?? undefined,
     });
     const state: AuthLocationState = { email };
     navigate("/register/check-email", { state });
@@ -93,6 +97,13 @@ export function RegisterPage() {
 
       <Stack $gap={5}>
         <Form onSubmit={onSubmit} noValidate>
+          <AvatarPicker
+            imageUrl={avatar?.image}
+            name={`${form.firstName} ${form.lastName}`.trim() || form.username}
+            onChange={setAvatar}
+            hint="Optional. Shown in a circle next to your name."
+            error={getAvatarFieldError(register.error)}
+          />
           <FieldRow>
             <TextField
               label="First name"

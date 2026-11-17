@@ -59,6 +59,10 @@ export const freshAuthMaxAgeInMinutes = 5;
 // cancels the deletion, and MongoDB removes it once the time is up. null deletes it right away.
 export const accountDeletionGraceInDays: number | null = 14;
 
+// Avatars. The size limits are part of the API contract (avatarLimits in @podrida/shared). This is
+// the body size allowed on the requests that can carry one: two base64 images plus the rest.
+export const avatarRequestBodyLimit = "2mb";
+
 // OAUTH (providers are switched on by their variables in the .env, see .env.example)
 // How long a first-time OAuth user has to pick a username before signing in again.
 export const oauthSignupExpirationInMinutes = 15;
