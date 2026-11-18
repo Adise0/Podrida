@@ -1,5 +1,7 @@
+import { avatarLimits } from "@podrida/shared";
 import Joi from "joi";
 import { nameMaxLength, usernameMaxLength, usernameMinLength } from "../serverConfig/server-config";
+import { parseImageDataUrl } from "../../server/utils/users/avatar";
 
 export const JoiObjectId = () => Joi.string().hex().length(24);
 
@@ -27,3 +29,36 @@ export const JoiUsername = () =>
 
 // Trimmed first, so a name made only of spaces counts as empty.
 export const JoiName = () => Joi.string().trim().max(nameMaxLength);
+
+// A PNG, JPEG or WebP data URL of at most maxBytes once decoded. The length check up front keeps a
+// huge string from being decoded at all (base64 takes 4 characters for every 3 bytes).
+const JoiImageDataUrl = (maxBytes: number) =>
+  Joi.string()
+    .max(Math.ceil(maxBytes / 3) * 4 + 32)
+    .custom((value: string, helpers) => {
+      const file = parseImageDataUrl(value);
+
+      if (!file) {
+        return helpers.error("image.invalid");
+      }
+
+      return file.data.length > maxBytes ? helpers.error("image.tooLarge") : value;
+    })
+    .messages({
+      "string.max": "Image is too large",
+      "image.invalid": "Image must be a PNG, JPEG or WebP data URL",
+      "image.tooLarge": "Image is too large",
+    });
+
+// See AvatarUpload in @podrida/shared. The image is checked to be an image, not its dimensions:
+// the browser is what renders it, and the size limit is what protects the server.
+export const JoiAvatarUpload = () =>
+  Joi.object({
+    image: JoiImageDataUrl(avatarLimits.imageMaxBytes).required(),
+    source: JoiImageDataUrl(avatarLimits.sourceMaxBytes).required(),
+    crop: Joi.object({
+      x: Joi.number().min(0).max(1).required(),
+      y: Joi.number().min(0).max(1).required(),
+      zoom: Joi.number().min(1).max(avatarLimits.maxZoom).required(),
+    }).required(),
+  });

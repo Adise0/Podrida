@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Users from "../../../database/models/Users";
 import { userSessionDurationInHours } from "../../../data/serverConfig/server-config";
+import { notifySessionsChanged } from "../../utils/auth/sessionEvents";
 
 // Signs out of the current session only, the user's other devices stay logged in. A token can't be
 // taken back once issued, so its session goes on a revoked list, which the tokenValidator checks.
@@ -27,6 +28,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
         },
       },
     );
+    notifySessionsChanged(userId); // Closes its open connections.
 
     res.status(200).json({
       message: "Signed out",

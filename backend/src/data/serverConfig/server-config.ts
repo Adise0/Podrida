@@ -1,4 +1,5 @@
 // This file contains the basic configuration parameters of the server
+import { availableParallelism } from "node:os";
 
 // The product's name, as users see it: in every email, and next to the code in authenticator apps.
 export const appName = "Podrida";
@@ -59,6 +60,10 @@ export const freshAuthMaxAgeInMinutes = 5;
 // cancels the deletion, and MongoDB removes it once the time is up. null deletes it right away.
 export const accountDeletionGraceInDays: number | null = 14;
 
+// Avatars. The size limits are part of the API contract (avatarLimits in @podrida/shared). This is
+// the body size allowed on the requests that can carry one: two base64 images plus the rest.
+export const avatarRequestBodyLimit = "2mb";
+
 // OAUTH (providers are switched on by their variables in the .env, see .env.example)
 // How long a first-time OAuth user has to pick a username before signing in again.
 export const oauthSignupExpirationInMinutes = 15;
@@ -70,6 +75,40 @@ export const twoFactorIssuer = appName; // The name authenticator apps show next
 export const twoFactorChallengeExpirationInMinutes = 5; // Time to type the code after the password.
 export const twoFactorMaxAttempts = 5; // Wrong codes per login before it has to start over.
 export const twoFactorBackupCodeCount = 10;
+
+// REALTIME (the WebSocket at realtimePath, see realtime.ts in @podrida/shared)
+export const socketAuthTimeoutInSeconds = 10; // Time to send "session:auth" after connecting.
+export const socketHeartbeatIntervalInSeconds = 30; // A connection that misses a ping is dropped.
+export const socketMaxMessageBytes = 16 * 1024;
+export const socketMaxConnectionsPerUser = 5; // Tabs open at once.
+// Requests per connection: a burst of socketRateLimitBurst, refilled at socketRateLimitPerSecond.
+export const socketRateLimitBurst = 20;
+export const socketRateLimitPerSecond = 10;
+
+// ROOMS AND GAMES (the room size limits are in roomLimits, in @podrida/shared)
+// How long a member whose connections all dropped keeps their seat. Long enough for a page reload
+// or a flaky network.
+export const roomReconnectGraceInSeconds = 30;
+// A game nobody is connected to anymore is abandoned after this long.
+export const gameAbandonAfterSeconds = 5 * 60;
+
+// The pace of a game: how long each timed phase lasts, for everyone to see what happened. They
+// match the frontend's animations (frontend/src/game/timing.ts).
+export const gameTimings = {
+  dealingBaseMs: 600, // Plus dealingPerCardMs per card, up to dealingMaxMs: the deal animation.
+  dealingPerCardMs: 60,
+  dealingMaxMs: 2100,
+  trickEndMs: 1600, // The winner shown (1.2s), then the cards slide to them (0.4s).
+  roundSummaryMs: 4500,
+};
+
+// BOTS (the computer players, @podrida/bots). Each decision runs in a worker thread so a search
+// never blocks the server. The thinking delay players see is a room setting (RoomSettings).
+export const botWorkerThreads = Math.max(1, Math.min(4, availableParallelism() - 1));
+export const botDecisionTimeoutMs = 5000; // A stuck worker is replaced; the seat plays a simple move.
+// Of the room's maximum thinking time: the shortest wait, and the wait on a forced move.
+export const botThinkingMinFraction = 0.5;
+export const botForcedMoveFraction = 0.25;
 
 // EMAIL DELIVERY
 export const emailMaxAttempts = 3; // Tries per email before giving up.

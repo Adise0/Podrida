@@ -4,3 +4,7 @@ export * from "./errors";
 export * from "./user";
 export * from "./responses";
 export * from "./admin";
+export * from "./rooms";
+export * from "./realtime";
+export * from "./podrida";
+export * from "./bots";

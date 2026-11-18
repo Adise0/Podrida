@@ -1,0 +1,192 @@
+[
+  {
+    "name": "dump the king of diamonds when on target and free to discard",
+    "notes": "On its bid (1 of 1), void in hearts, no trumps: anything goes. The K of diamonds is the suit's boss and would be forced out on the next diamond lead.",
+    "seats": ["me", "p2", "p3", "p4"],
+    "dealer": "p4",
+    "trump": "S",
+    "trumpCard": "2S",
+    "cardsPerPlayer": 6,
+    "hand": ["KD", "2D", "10C", "4C"],
+    "bids": {
+      "me": 1,
+      "p2": 2,
+      "p3": 0,
+      "p4": 2
+    },
+    "history": [
+      {
+        "leader": "p2",
+        "cards": ["QH", "2H", "KH", "6S"]
+      },
+      {
+        "leader": "me",
+        "cards": ["5D", "AD", "QD", "JD"]
+      }
+    ],
+    "current": {
+      "leader": "p2",
+      "cards": ["9H", "4H", "AH"]
+    },
+    "expect": {
+      "play": "KD"
+    },
+    "difficulty": ["skilled", "expert"]
+  },
+  {
+    "name": "win the trick with the ace, keep the ten",
+    "notes": "Needs 1 trick, last to play, both clubs win. The ten is the safer card to keep: the ace would be forced to win again later.",
+    "seats": ["me", "p2", "p3", "p4"],
+    "dealer": "p4",
+    "trump": "H",
+    "trumpCard": "7H",
+    "cardsPerPlayer": 3,
+    "hand": ["AC", "10C", "2D"],
+    "bids": {
+      "me": 1,
+      "p2": 1,
+      "p3": 0,
+      "p4": 1
+    },
+    "history": [],
+    "current": {
+      "leader": "p2",
+      "cards": ["9C", "3C", "5C"]
+    },
+    "expect": {
+      "play": "AC"
+    },
+    "difficulty": ["skilled", "expert"]
+  },
+  {
+    "name": "forced to beat while ducking: beat with the lowest, others may still overtake it",
+    "seats": ["me", "p2", "p3", "p4"],
+    "dealer": "p2",
+    "trump": "H",
+    "trumpCard": "4H",
+    "cardsPerPlayer": 3,
+    "hand": ["JC", "AC", "3D"],
+    "bids": {
+      "me": 0,
+      "p2": 1,
+      "p3": 1,
+      "p4": 1
+    },
+    "history": [],
+    "current": {
+      "leader": "p4",
+      "cards": ["10C"]
+    },
+    "expect": {
+      "play": "JC"
+    },
+    "difficulty": ["casual", "skilled", "expert"]
+  },
+  {
+    "name": "needing a trick, don't lead the low heart under your own ace",
+    "seats": ["me", "p2", "p3", "p4"],
+    "dealer": "p2",
+    "trump": "S",
+    "trumpCard": "9S",
+    "cardsPerPlayer": 6,
+    "hand": ["AH", "5H", "2C", "3D"],
+    "bids": {
+      "me": 2,
+      "p2": 2,
+      "p3": 1,
+      "p4": 2
+    },
+    "history": [
+      {
+        "leader": "p4",
+        "cards": ["KC", "4C", "6C", "9C"]
+      },
+      {
+        "leader": "p4",
+        "cards": ["QS", "KS", "4D", "5S"]
+      }
+    ],
+    "current": {
+      "leader": "me",
+      "cards": []
+    },
+    "expect": {
+      "notPlay": ["5H"]
+    },
+    "difficulty": ["casual", "skilled", "expert"],
+    "notes": "Bid 2, won 1 (the K of spades): needs 1 more. Leading the 5 of hearts gives the trick away and leaves the ace alone, the worst of the four (the others are close)."
+  },
+  {
+    "name": "one card each, the ace of trumps: bid 1",
+    "seats": ["me", "p2", "p3", "p4"],
+    "dealer": "p4",
+    "trump": "S",
+    "trumpCard": "9S",
+    "cardsPerPlayer": 1,
+    "hand": ["AS"],
+    "bids": {
+      "me": null,
+      "p2": null,
+      "p3": null,
+      "p4": null
+    },
+    "history": [],
+    "current": {
+      "leader": "p2",
+      "cards": []
+    },
+    "expect": {
+      "bid": 1
+    },
+    "difficulty": ["skilled", "expert"]
+  },
+  {
+    "name": "one card each, a low side card, not leading: bid 0",
+    "seats": ["me", "p2", "p3", "p4"],
+    "dealer": "p4",
+    "trump": "H",
+    "trumpCard": "9H",
+    "cardsPerPlayer": 1,
+    "hand": ["2C"],
+    "bids": {
+      "me": null,
+      "p2": null,
+      "p3": null,
+      "p4": null
+    },
+    "history": [],
+    "current": {
+      "leader": "p2",
+      "cards": []
+    },
+    "expect": {
+      "bid": 0
+    },
+    "difficulty": ["casual", "skilled", "expert"]
+  },
+  {
+    "name": "on target and can't beat the trick: lose the high card now",
+    "notes": "Bid 0. The K of clubs is on the trick: neither club can beat it, so both lose here. Lose the 10 now, keep the 4 as a safe exit.",
+    "seats": ["me", "p2", "p3", "p4"],
+    "dealer": "p4",
+    "trump": "H",
+    "trumpCard": "2H",
+    "cardsPerPlayer": 3,
+    "hand": ["10C", "4C", "5D"],
+    "bids": {
+      "me": 0,
+      "p2": 1,
+      "p3": 1,
+      "p4": 0
+    },
+    "history": [],
+    "current": {
+      "leader": "p2",
+      "cards": ["9C", "KC", "3C"]
+    },
+    "expect": {
+      "play": "10C"
+    },
+    "difficulty": ["skilled", "expert"]
+  }
+]

@@ -2,6 +2,14 @@ import { model, Schema } from "mongoose";
 import DatabaseUserData from "../../types/userTypes/DatabaseUserData";
 import UserRole from "../../types/userTypes/UserRole";
 
+const AvatarFileSchema = new Schema(
+  {
+    contentType: { type: String, required: true },
+    data: { type: Buffer, required: true },
+  },
+  { _id: false },
+);
+
 // This is the user schema used in the mongoDB database, if you change this schema, make sure to also change the types of the user data in the types folder.
 const UserSchema = new Schema<DatabaseUserData>(
   {
@@ -43,6 +51,17 @@ const UserSchema = new Schema<DatabaseUserData>(
       otpLastSentAt: Date,
       password: String,
     },
+
+    // The avatar, cropped in the browser. Kept on the user so it goes with it (pending accounts
+    // and deletions included). The files are up to a few hundred KB, so no query loads them
+    // unless it asks for them with "+avatarImage" / "+avatarSource".
+    avatar: {
+      _id: false,
+      crop: { x: Number, y: Number, zoom: Number },
+      updatedAt: Date,
+    },
+    avatarImage: { type: AvatarFileSchema, select: false },
+    avatarSource: { type: AvatarFileSchema, select: false },
 
     role: {
       type: String,
@@ -157,6 +176,8 @@ const UserSchema = new Schema<DatabaseUserData>(
         delete json.emailChangeLastSentAt;
         delete json.revokedSessions;
         delete json.twoFactor;
+        delete json.avatarImage;
+        delete json.avatarSource;
       },
     },
   },

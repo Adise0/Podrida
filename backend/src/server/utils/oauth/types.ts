@@ -6,6 +6,7 @@ export interface OAuthIdentity {
   emailVerified: boolean;
   firstName?: string;
   lastName?: string;
+  pictureUrl?: string; // An https URL, offered as the avatar on a first sign-in.
 }
 
 export interface AuthorizationUrlParams {

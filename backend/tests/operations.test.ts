@@ -1,9 +1,12 @@
 import dns from "node:dns";
 import { createServer, Server } from "node:http";
 import { AddressInfo } from "node:net";
+import { realtimePath, SocketCloseCode } from "@podrida/shared";
 import mongoose from "mongoose";
+import WebSocket from "ws";
 import connectToDB from "../src/database";
 import validateEnv from "../src/data/serverConfig/validateEnv";
+import attachRealtime from "../src/realtime/socketServer";
 import app from "../src/server";
 import setupGracefulShutdown from "../src/server/setupGracefulShutdown";
 
@@ -106,14 +109,24 @@ describe("health without a database", () => {
 });
 
 describe("graceful shutdown", () => {
-  test("SIGTERM closes the server and the database, then exits 0", async () => {
+  test("SIGTERM closes the sockets, the server and the database, then exits 0", async () => {
     await connectToDB(uri());
 
     const server = createServer();
     await new Promise<void>((resolve) => {
       server.listen(0, "127.0.0.1", resolve);
     });
-    setupGracefulShutdown(server);
+    setupGracefulShutdown(server, attachRealtime(server));
+
+    // An open realtime connection is told to come back later, and doesn't hold the shutdown up.
+    const { port } = server.address() as AddressInfo;
+    const socket = new WebSocket(`ws://127.0.0.1:${port}${realtimePath}`);
+    const socketClosed = new Promise<number>((resolve) => {
+      socket.on("close", (code) => resolve(code));
+    });
+    await new Promise((resolve) => {
+      socket.once("open", resolve);
+    });
 
     let resolveExit: (code: unknown) => void = () => {};
     const exitCalled = new Promise((resolve) => {
@@ -129,6 +142,7 @@ describe("graceful shutdown", () => {
     exit.mockRestore();
 
     expect(exitCode).toBe(0);
+    expect(await socketClosed).toBe(SocketCloseCode.goingAway);
     expect(server.listening).toBe(false);
     expect(mongoose.connection.readyState).toBe(mongoose.ConnectionStates.disconnected);
 

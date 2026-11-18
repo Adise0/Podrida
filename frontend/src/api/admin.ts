@@ -1,5 +1,8 @@
 import {
   endpoints,
+  type AdminGame,
+  type AdminGameListQuery,
+  type AdminGameListResponse,
   type AdminUser,
   type AdminUserListQuery,
   type AdminUserListResponse,
@@ -13,6 +16,9 @@ import { request, withParams } from "./client";
 const { admin } = endpoints;
 const path = (endpoint: string, userId?: string) =>
   `${admin.path}${userId ? withParams(endpoint, { userId }) : endpoint}`;
+
+const gamePath = (endpoint: string, params: { gameId: string; userId?: string }) =>
+  `${admin.path}${withParams(endpoint, { userId: "", ...params })}`;
 
 const post = (endpoint: string, userId: string) =>
   request<MessageResponse>(path(endpoint, userId), { method: "POST", auth: true });
@@ -42,6 +48,21 @@ export const adminApi = {
     request<MessageResponse>(path(admin.userRole, userId), {
       method: "PATCH",
       body: data,
+      auth: true,
+    }),
+
+  listGames: (query: AdminGameListQuery) =>
+    request<AdminGameListResponse>(path(admin.games), { query: { ...query }, auth: true }),
+
+  getGame: (gameId: string) => request<AdminGame>(gamePath(admin.game, { gameId }), { auth: true }),
+
+  // Both only work on games being played, and answer the game as it is afterwards.
+  endGame: (gameId: string) =>
+    request<AdminGame>(gamePath(admin.endGame, { gameId }), { method: "POST", auth: true }),
+
+  kickGamePlayer: (gameId: string, userId: string) =>
+    request<AdminGame>(gamePath(admin.kickPlayer, { gameId, userId }), {
+      method: "POST",
       auth: true,
     }),
 };

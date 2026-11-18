@@ -1,0 +1,40 @@
+{
+  "name": "@podrida/bots",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Podrida computer players: what each one knows, how it bids and plays. Pure computation, run by the backend in worker threads",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    },
+    "./worker": "./dist/worker.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prebuild": "npm run build -w @podrida/shared",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "pretypecheck": "npm run build -w @podrida/shared",
+    "test": "jest",
+    "pretest": "npm run build -w @podrida/shared",
+    "tournament": "node dist/tournament.js",
+    "pretournament": "npm run build"
+  },
+  "dependencies": {
+    "@podrida/shared": "*"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.4",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.15",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}

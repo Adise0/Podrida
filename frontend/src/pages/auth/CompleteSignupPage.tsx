@@ -1,9 +1,10 @@
-import { ErrorCode } from "@podrida/shared";
+import { ErrorCode, type AvatarUpload } from "@podrida/shared";
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation } from "react-router";
 import { hasErrorCode } from "../../api/client";
-import { getFieldErrors } from "../../api/errorMessages";
+import { getAvatarFieldError, getFieldErrors } from "../../api/errorMessages";
 import { oauthApi } from "../../api/oauth";
+import { AvatarPicker } from "../../components/AvatarPicker";
 import { ErrorAlert } from "../../components/ErrorAlert";
 import { PageTitle } from "../../components/PageTitle";
 import { Alert } from "../../components/ui/Alert";
@@ -13,6 +14,7 @@ import { TextField } from "../../components/ui/Field";
 import { FieldRow, Form, TextLink } from "../../components/ui/layout";
 import { availabilityMessages, useKeyAvailability } from "../../hooks/useKeyAvailability";
 import { useRequest } from "../../hooks/useRequest";
+import { getProviderLabel } from "../../lib/oauth";
 import { validateUsername } from "../../lib/validation";
 import { readAuthState } from "../../router/locationState";
 import { startSession } from "../../stores/session/actions";
@@ -26,6 +28,7 @@ export function CompleteSignupPage() {
   const [firstName, setFirstName] = useState(oauthSignup?.firstName ?? "");
   const [lastName, setLastName] = useState(oauthSignup?.lastName ?? "");
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<AvatarUpload | null>(null);
 
   const availability = useKeyAvailability(
     "username",
@@ -39,6 +42,7 @@ export function CompleteSignupPage() {
       username,
       firstName: firstName.trim() || undefined,
       lastName: lastName.trim() || undefined,
+      avatar: avatar ?? undefined,
     });
     startSession(response.token); // GuestOnly then sends the user on to `from`.
   });
@@ -73,6 +77,23 @@ export function CompleteSignupPage() {
         }
       />
       <Form onSubmit={onSubmit} noValidate>
+        <AvatarPicker
+          imageUrl={avatar?.image}
+          name={`${firstName} ${lastName}`.trim() || username}
+          onChange={setAvatar}
+          hint="Optional. Shown in a circle next to your name."
+          suggestion={
+            oauthSignup.pictureUrl
+              ? {
+                  url: oauthSignup.pictureUrl,
+                  label: oauthSignup.provider
+                    ? `Use my ${getProviderLabel(oauthSignup.provider)} picture`
+                    : "Use my account picture",
+                }
+              : undefined
+          }
+          error={getAvatarFieldError(signup.error)}
+        />
         <TextField
           label="Username"
           autoComplete="username"

@@ -74,10 +74,10 @@ export function OAuthCallbackPage() {
     const response = await oauthApi.login(provider, data);
 
     if ("signupRequired" in response) {
-      const { signupToken, email, firstName, lastName } = response;
+      const { signupToken, email, firstName, lastName, pictureUrl } = response;
       const state: AuthLocationState = {
         from: returnTo,
-        oauthSignup: { signupToken, email, firstName, lastName },
+        oauthSignup: { signupToken, provider, email, firstName, lastName, pictureUrl },
       };
       navigate("/auth/oauth/complete-signup", { replace: true, state });
       return;

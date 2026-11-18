@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import sendSecurityNotice from "../../utils/email/sendSecurityNotice";
 import logAdminAction from "../../utils/logAdminAction";
+import { notifySessionsChanged } from "../../utils/auth/sessionEvents";
 
 const disableUser = async (req: Request, res: Response, next: NextFunction) => {
   const { targetUser } = res.locals; // Grab the user left by the manageableUserValidator.
@@ -11,6 +12,7 @@ const disableUser = async (req: Request, res: Response, next: NextFunction) => {
       targetUser.isDisabled = true;
       targetUser.tokenVersion += 1;
       await targetUser.save();
+      notifySessionsChanged(targetUser.id); // Closes its open connections.
 
       logAdminAction(req, res, "disableUser");
 

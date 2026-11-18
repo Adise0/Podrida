@@ -1,0 +1,8 @@
+{
+  "LERO": ["Lluc", "Montserrat (2026)", "Valeria", "Hana", "Laia", "Arnau"],
+  "BEGINNER": ["Mariona", "asd", "Nacho", "Pepa", "Kiko", "Bea"],
+  "CASUAL": ["Marti", "Elo", "Carmen", "Julio", "Vera", "Rafa"],
+  "SKILLED": ["Marta", "Pau", "Elena", "Tomás", "Irene", "Óscar"],
+  "EXPERT": ["Dalmau", "Tiet Carlus", "Montserrat (Prime)", "Daniel", "Pau", "Marta"],
+  "shared": ["Lola", "Teo", "Alba", "Nico", "Clara", "Iker"]
+}

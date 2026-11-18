@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ObjectSchema } from "joi";
 import { getValidationError } from "../../../data/errorObjects/dataValidationErrors";
+import avatarUploadData from "../../../data/joiObjects/avatarUploadData";
 import changePasswordData from "../../../data/joiObjects/changePasswordData";
 import emailChangeData from "../../../data/joiObjects/emailChangeData";
 import emailOrUsernameData from "../../../data/joiObjects/emailOrUsernameData";
@@ -33,6 +34,7 @@ const bodyValidator =
     next();
   };
 
+export const avatarUploadDataValidator = bodyValidator(avatarUploadData, "avatar");
 export const changePasswordDataValidator = bodyValidator(changePasswordData, "change password");
 export const emailChangeDataValidator = bodyValidator(emailChangeData, "email change");
 export const emailOrUsernameDataValidator = bodyValidator(emailOrUsernameData, "email/username");

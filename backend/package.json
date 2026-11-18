@@ -8,21 +8,21 @@
   },
   "scripts": {
     "test": "jest",
-    "pretest": "npm run build -w @podrida/shared",
+    "pretest": "npm run build -w @podrida/bots",
     "testCovNoWatch": "jest --coverage",
     "testCov": "jest --watchAll --coverage",
     "build": "tsc",
     "start": "node .",
-    "dev": "nodemon -q --watch src --watch ../shared/dist ./src/index.ts",
+    "dev": "nodemon -q --watch src --watch ../shared/dist --watch ../bots/dist ./src/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "pretypecheck": "npm run build -w @podrida/shared",
-    "pretestCov": "npm run build -w @podrida/shared",
-    "pretestCovNoWatch": "npm run build -w @podrida/shared",
-    "predev": "npm run build -w @podrida/shared",
-    "prebuild": "npm run build -w @podrida/shared",
+    "pretypecheck": "npm run build -w @podrida/bots",
+    "pretestCov": "npm run build -w @podrida/bots",
+    "pretestCovNoWatch": "npm run build -w @podrida/bots",
+    "predev": "npm run build -w @podrida/bots",
+    "prebuild": "npm run build -w @podrida/bots",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
@@ -39,6 +39,7 @@
     "@types/mongoose": "^5.11.96",
     "@types/node": "^26.6.4",
     "@types/nodemailer": "^8.0.2",
+    "@types/ws": "^8.18.2",
     "eslint": "^10.12.0",
     "eslint-config-airbnb-extended": "^3.3.0",
     "eslint-config-prettier": "^10.1.8",
@@ -55,6 +56,7 @@
     "typescript-eslint": "^8.71.1"
   },
   "dependencies": {
+    "@podrida/bots": "*",
     "@podrida/shared": "*",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
@@ -69,7 +71,8 @@
     "nodemailer": "^10.0.16",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
-    "prom-client": "^15.1.3"
+    "prom-client": "^15.1.3",
+    "ws": "^8.23.0"
   },
   "private": true
 }

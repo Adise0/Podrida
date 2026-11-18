@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { JoiName, JoiUsername } from "./joiTypes";
+import { JoiAvatarUpload, JoiName, JoiUsername } from "./joiTypes";
 
 // state and nonce are random values the frontend generates for each sign-in (at least 128 bits,
 // eg. crypto.randomUUID() or 16 random bytes in base64url) and keeps until the provider sends the user back.
@@ -49,4 +49,5 @@ export const oauthSignupData = Joi.object({
   }),
   firstName: JoiName(),
   lastName: JoiName(),
+  avatar: JoiAvatarUpload(),
 });

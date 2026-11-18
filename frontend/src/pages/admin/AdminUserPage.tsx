@@ -260,6 +260,10 @@ function ManagedUser({ user, me }: { user: AdminUser; me: { id: string; role: Us
           <dd>{formatDateTime(user.updatedAt)}</dd>
           <dt>Id</dt>
           <dd>{user.id}</dd>
+          <dt>Games</dt>
+          <dd>
+            <TextLink to={`/admin/games?player=${user.id}`}>See their games</TextLink>
+          </dd>
         </Details>
       </Card>
 

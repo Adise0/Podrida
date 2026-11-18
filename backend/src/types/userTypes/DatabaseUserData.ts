@@ -1,6 +1,11 @@
 import { HydratedDocument } from "mongoose";
 import UserRole from "./UserRole";
 
+export interface AvatarFile {
+  contentType: string; // image/png, image/jpeg or image/webp.
+  data: Buffer;
+}
+
 // This is a type for the expected object received from the database
 interface DatabaseUserData {
   information: {
@@ -19,6 +24,14 @@ interface DatabaseUserData {
     otpLastSentAt?: Date;
     username: string; // Lowercased, it's what logins and uniqueness go by.
   };
+
+  // Set together, or not at all. The two files aren't loaded unless a query asks for them.
+  avatar?: {
+    crop: { x: number; y: number; zoom: number };
+    updatedAt: Date;
+  };
+  avatarImage?: AvatarFile; // The square avatar everyone sees.
+  avatarSource?: AvatarFile; // What it was cut from, to re-frame it.
 
   role: UserRole;
   isDisabled: boolean;

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import Users from "../../../database/models/Users";
 import { getUserNotFoundForIdError } from "../../../data/errorObjects/userErrors";
 import { accountDeletionGraceInDays } from "../../../data/serverConfig/server-config";
+import { notifySessionsChanged } from "../../utils/auth/sessionEvents";
 import sendSecurityNotice from "../../utils/email/sendSecurityNotice";
 
 // Deletes the logged in user's account. Only reachable through a fresh session (tokenValidator +
@@ -14,6 +15,7 @@ const deleteAccount = async (req: Request, res: Response, next: NextFunction) =>
   try {
     if (accountDeletionGraceInDays === null) {
       const deletedUser = await Users.findByIdAndDelete(userId);
+      notifySessionsChanged(userId); // Closes its open connections.
 
       // If no user matches the token's id write the error and go next.
       if (!deletedUser) {
@@ -44,6 +46,7 @@ const deleteAccount = async (req: Request, res: Response, next: NextFunction) =>
       $inc: { tokenVersion: 1 },
       $unset: { pendingEmail: "", emailChangeToken: "" },
     });
+    notifySessionsChanged(userId); // Closes its open connections.
 
     // If no user matches the token's id write the error and go next.
     if (!scheduledUser) {

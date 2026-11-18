@@ -31,6 +31,7 @@ export enum ErrorCode {
   ACCOUNT_NOT_ACTIVATED = "ACCOUNT_NOT_ACTIVATED",
   ACCOUNT_ALREADY_ACTIVATED = "ACCOUNT_ALREADY_ACTIVATED",
   PASSWORD_RESET_REQUIRED = "PASSWORD_RESET_REQUIRED", // An admin forced it: the emailed link is the only way in.
+  AVATAR_NOT_FOUND = "AVATAR_NOT_FOUND", // The user has no avatar.
 
   // Registration
   DUPLICATE_KEY = "DUPLICATE_KEY", // See "fields" for which of email/username is TAKEN.
@@ -53,6 +54,29 @@ export enum ErrorCode {
   TWO_FACTOR_ALREADY_ENABLED = "TWO_FACTOR_ALREADY_ENABLED",
   TWO_FACTOR_NOT_ENABLED = "TWO_FACTOR_NOT_ENABLED",
   TWO_FACTOR_SETUP_NOT_STARTED = "TWO_FACTOR_SETUP_NOT_STARTED", // Call setup first, then enable.
+
+  // Realtime connection
+  UNKNOWN_REQUEST = "UNKNOWN_REQUEST", // No such request type.
+
+  // Rooms and games
+  ROOM_NOT_FOUND = "ROOM_NOT_FOUND", // Gone (emptied or started), or never existed.
+  ROOM_FULL = "ROOM_FULL",
+  ROOM_STARTING = "ROOM_STARTING", // Its game is being created: nobody can join or leave right now.
+  ALREADY_IN_ROOM = "ALREADY_IN_ROOM", // Leave the current one first (see "details.roomId").
+  ALREADY_IN_GAME = "ALREADY_IN_GAME", // Until the current game ends (see "details.gameId").
+  NOT_IN_ROOM = "NOT_IN_ROOM",
+  NOT_ROOM_HOST = "NOT_ROOM_HOST",
+  NOT_ENOUGH_PLAYERS = "NOT_ENOUGH_PLAYERS",
+  GAME_NOT_FOUND = "GAME_NOT_FOUND", // No such game, or it isn't running anymore.
+  NOT_IN_GAME = "NOT_IN_GAME",
+  NOT_GAME_HOST = "NOT_GAME_HOST",
+  CANNOT_KICK_YOURSELF = "CANNOT_KICK_YOURSELF", // The host ends the game instead.
+  BOT_NOT_FOUND = "BOT_NOT_FOUND", // No bot with that id in the room.
+  CANNOT_KICK_BOT = "CANNOT_KICK_BOT", // Bots can't be kicked from a game: it would only hand the seat to another bot.
+  WRONG_PHASE = "WRONG_PHASE", // Eg. a bid while cards are being played.
+  NOT_YOUR_TURN = "NOT_YOUR_TURN",
+  INVALID_BID = "INVALID_BID", // From 0 to the cards of the round.
+  CARD_NOT_PLAYABLE = "CARD_NOT_PLAYABLE", // Not in the hand, or the rules don't allow it: see "details.rule".
 }
 
 // What's wrong with a single field, used in the "fields" object of an error response

@@ -5,9 +5,11 @@ export interface AuthLocationState {
   notice?: string; // A message for the page to show, eg. why the user was sent back to login.
   oauthSignup?: {
     signupToken: string;
+    provider?: string;
     email: string;
     firstName?: string;
     lastName?: string;
+    pictureUrl?: string;
   };
   email?: string; // The address an email was just sent to.
 }

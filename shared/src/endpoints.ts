@@ -47,6 +47,15 @@ export const twoFactorEndpoints = <const>{
 export const userEndpoints = <const>{
   path: "/users",
   myUser: "/myUser",
+  myAvatar: "/myUser/avatar", // GET (the source, to re-frame it), PUT and DELETE.
+  avatar: "/avatars/:userId", // Public: the avatar image itself.
+};
+
+// The games a user played to the end.
+export const gameEndpoints = <const>{
+  path: "/games",
+  finished: "/finished",
+  finishedGame: "/finished/:gameId",
 };
 
 export const adminEndpoints = <const>{
@@ -59,6 +68,10 @@ export const adminEndpoints = <const>{
   forcePasswordReset: "/users/:userId/forcePasswordReset",
   userRole: "/users/:userId/role",
   resetTwoFactor: "/users/:userId/resetTwoFactor",
+  games: "/games",
+  game: "/games/:gameId",
+  endGame: "/games/:gameId/end",
+  kickPlayer: "/games/:gameId/players/:userId/kick",
 };
 
 export const healthEndpoints = <const>{
@@ -77,5 +90,6 @@ export const endpoints = <const>{
   oauth: oauthEndpoints,
   twoFactor: twoFactorEndpoints,
   users: userEndpoints,
+  games: gameEndpoints,
   admin: adminEndpoints,
 };

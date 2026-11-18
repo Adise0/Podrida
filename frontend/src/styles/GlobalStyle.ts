@@ -63,8 +63,11 @@ export const GlobalStyle = createGlobalStyle`
     outline-offset: 2px;
   }
 
+  /* The game screen handles reduced motion itself: its slides and pops turn into fades. */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *:not(.podrida-game, .podrida-game *),
+    *:not(.podrida-game, .podrida-game *)::before,
+    *:not(.podrida-game, .podrida-game *)::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }

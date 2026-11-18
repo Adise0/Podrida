@@ -1,7 +1,6 @@
 import { UserRole, type AdminUserListQuery } from "@podrida/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router";
-import styled from "styled-components";
+import { useSearchParams } from "react-router";
 import { ErrorAlert } from "../../components/ErrorAlert";
 import { PageTitle } from "../../components/PageTitle";
 import { Button } from "../../components/ui/Button";
@@ -14,83 +13,11 @@ import { roleLabels } from "../../lib/permissions";
 import { loadAdminUsers } from "../../stores/adminUsers/actions";
 import { useAdminUsers } from "../../stores/adminUsers/store";
 import { PageHeading } from "../app/PageHeading";
+import { Filters, RowLink, Table, TableEmpty, TableFooter, TableScroll } from "./adminTable";
 import { RoleBadge, StatusBadges } from "./UserBadges";
 
 const pageSize = 20;
 const searchDebounceMs = 350;
-
-const Filters = styled.div`
-  display: grid;
-  grid-template-columns: 2fr repeat(3, 1fr);
-  gap: ${({ theme }) => theme.space(3)};
-  padding: ${({ theme }) => theme.space(5)};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-  ${({ theme }) => theme.media.small} {
-    grid-template-columns: 1fr 1fr;
-
-    & > :first-child {
-      grid-column: 1 / -1;
-    }
-  }
-`;
-
-const TableScroll = styled.div`
-  overflow-x: auto;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-
-  th,
-  td {
-    padding: ${({ theme }) => `${theme.space(3)} ${theme.space(5)}`};
-    text-align: left;
-    vertical-align: middle;
-    white-space: nowrap;
-  }
-
-  th {
-    color: ${({ theme }) => theme.colors.textMuted};
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  tbody tr {
-    border-top: 1px solid ${({ theme }) => theme.colors.border};
-  }
-
-  tbody tr:hover {
-    background: ${({ theme }) => theme.colors.surfaceSunken};
-  }
-`;
-
-const UserLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.text};
-  font-weight: 600;
-  text-decoration: none;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.accent};
-  }
-`;
-
-const Footer = styled(Row)`
-  padding: ${({ theme }) => theme.space(4)} ${({ theme }) => theme.space(5)};
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-const Empty = styled.div`
-  display: grid;
-  place-items: center;
-  gap: ${({ theme }) => theme.space(2)};
-  padding: ${({ theme }) => theme.space(12)};
-  color: ${({ theme }) => theme.colors.textMuted};
-`;
 
 const toBoolean = (value: string | null) =>
   value === "true" ? true : value === "false" ? false : undefined;
@@ -201,18 +128,18 @@ export function AdminUsersPage() {
         </Filters>
 
         {list.status === "error" ? (
-          <Empty>
+          <TableEmpty>
             <ErrorAlert error={list.error} />
             <Button variant="secondary" small onClick={() => loadAdminUsers(query)}>
               Try again
             </Button>
-          </Empty>
+          </TableEmpty>
         ) : isFirstLoad ? (
-          <Empty>
+          <TableEmpty>
             <Spinner />
-          </Empty>
+          </TableEmpty>
         ) : users.length === 0 ? (
-          <Empty>No users match these filters.</Empty>
+          <TableEmpty>No users match these filters.</TableEmpty>
         ) : (
           <TableScroll>
             <Table>
@@ -229,9 +156,7 @@ export function AdminUsersPage() {
                 {users.map((user) => (
                   <tr key={user.id}>
                     <td>
-                      <UserLink to={`/admin/users/${user.id}`}>
-                        {user.information.username}
-                      </UserLink>
+                      <RowLink to={`/admin/users/${user.id}`}>{user.information.username}</RowLink>
                       <MutedText>{getDisplayName(user.information) || "—"}</MutedText>
                     </td>
                     <td>{user.information.email}</td>
@@ -249,7 +174,7 @@ export function AdminUsersPage() {
           </TableScroll>
         )}
 
-        <Footer $justify="space-between">
+        <TableFooter $justify="space-between">
           <MutedText>
             {list.total} user{list.total === 1 ? "" : "s"}
             {list.totalPages > 1 && ` · page ${page} of ${list.totalPages}`}
@@ -273,7 +198,7 @@ export function AdminUsersPage() {
               Next
             </Button>
           </Row>
-        </Footer>
+        </TableFooter>
       </Card>
     </Stack>
   );

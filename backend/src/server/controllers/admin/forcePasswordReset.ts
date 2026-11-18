@@ -5,6 +5,7 @@ import sendPasswordResetEmail from "../../utils/auth/sendPasswordResetEmail";
 import sendSecurityNotice from "../../utils/email/sendSecurityNotice";
 import logAdminAction from "../../utils/logAdminAction";
 import { logEmailRequestError } from "../../utils/respondEmailRequestAccepted";
+import { notifySessionsChanged } from "../../utils/auth/sessionEvents";
 
 // For an account that may be compromised: ends every session and stops the password from working,
 // so the only way back in is the link sent to the account's email. If this email fails the user
@@ -23,6 +24,7 @@ const forcePasswordReset = async (req: Request, res: Response, next: NextFunctio
     targetUser.tokenVersion += 1;
     clearOtp(targetUser);
     await targetUser.save();
+    notifySessionsChanged(targetUser.id); // Closes its open connections.
 
     logAdminAction(req, res, "forcePasswordReset");
 

@@ -14,11 +14,12 @@ import {
   getDuplicateKeyErrorFromMongoError,
   isDuplicateKeyMongoError,
 } from "../../utils/duplicateKeyMongoError";
+import { getAvatarFields } from "../../utils/users/avatar";
 
 // Creates the account of a first-time OAuth user once they've picked a username, and logs them in.
 // The account is active straight away: the provider already verified the email.
 const completeOAuthSignup = async (req: Request, res: Response, next: NextFunction) => {
-  const { token, username, firstName, lastName } = req.body;
+  const { token, username, firstName, lastName, avatar } = req.body;
 
   let signup: OAuthSignupTokenPayload;
 
@@ -77,6 +78,7 @@ const completeOAuthSignup = async (req: Request, res: Response, next: NextFuncti
           linkedAt: new Date(),
         },
       ],
+      ...(avatar && getAvatarFields(avatar)),
     });
 
     res.locals.userId = createdUser.id;

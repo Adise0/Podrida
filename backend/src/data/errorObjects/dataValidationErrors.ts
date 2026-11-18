@@ -21,6 +21,10 @@ const joiTypeToFieldErrorCode: Record<string, FieldErrorCode> = {
   "string.length": FieldErrorCode.INVALID_FORMAT,
   "string.min": FieldErrorCode.TOO_SHORT,
   "string.max": FieldErrorCode.TOO_LONG,
+  "number.min": FieldErrorCode.INVALID,
+  "number.max": FieldErrorCode.INVALID,
+  "image.invalid": FieldErrorCode.INVALID_FORMAT,
+  "image.tooLarge": FieldErrorCode.TOO_LONG,
 };
 
 // Shared by every request payload validator: turns a failed Joi validation into a single
