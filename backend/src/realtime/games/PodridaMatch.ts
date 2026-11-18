@@ -18,6 +18,7 @@ import {
   type PodridaState,
   type Suit,
 } from "@podrida/shared";
+import type { BotView } from "@podrida/bots";
 import {
   getCardNotPlayableError,
   getInvalidBidError,
@@ -89,10 +90,16 @@ export default class PodridaMatch {
 
   private readonly firstDealerIndex: number;
 
+  // Seats whose cards aren't checked against the play rules (Lero bots, which don't know them):
+  // the card only has to be theirs, on their turn.
+  private readonly unruledSeats: Set<string>;
+
   constructor(
     readonly seats: string[],
     private readonly random: RandomInt = randomInt,
+    unruledSeats: string[] = [],
   ) {
+    this.unruledSeats = new Set(unruledSeats);
     this.schedule = roundSchedule(seats.length);
     this.totals = new Map(seats.map((userId) => [userId, 0]));
     this.firstDealerIndex = random(seats.length);
@@ -109,6 +116,12 @@ export default class PodridaMatch {
 
   get turnId(): string | null {
     return this.round.turnIndex === null ? null : this.seats[this.round.turnIndex];
+  }
+
+  // Changes with every move and phase: a decision taken at one value is stale at the next.
+  get progress() {
+    const { round } = this;
+    return `${this.roundIndex}:${this.phase}:${round.trickNumber}:${round.trick.length}:${this.turnId}`;
   }
 
   get isLastRound() {
@@ -222,7 +235,9 @@ export default class PodridaMatch {
     const { trick, trumpSuit } = this.round;
     const inHand = hand.some((held) => sameCard(held, card));
 
-    if (!inHand || !isPlayable(card, hand, trick, trumpSuit)) {
+    const isChecked = !this.unruledSeats.has(userId);
+
+    if (!inHand || (isChecked && !isPlayable(card, hand, trick, trumpSuit))) {
       throw getCardNotPlayableError(inHand ? playRule(hand, trick, trumpSuit) : null);
     }
 
@@ -307,7 +322,7 @@ export default class PodridaMatch {
     return this.totals.get(userId) ?? 0;
   }
 
-  // What a seat that can't decide (a kicked player) does on its turn: bids 0, and plays the
+  // The simplest legal move, for a bot seat whose bot failed to answer: bids 0, and plays the
   // lowest card it may.
   automaticMove(): { bid: number } | { card: Card } {
     const userId = this.turnId as string;
@@ -355,6 +370,38 @@ export default class PodridaMatch {
       history: this.history,
       lastAction: this.lastAction,
       phaseEndsAt: this.phaseEndsAt,
+    };
+  }
+
+  // What a bot in this seat knows: its own hand (now and as dealt), and everything public about
+  // the round. Never the other hands, or the undealt cards. See @podrida/bots.
+  botViewFor(userId: string): BotView {
+    const { round } = this;
+    const ownDeal = round.log.hands.find((hand) => hand.userId === userId);
+    const copy = (played: PlayedCard) => ({ ...played, card: { ...played.card } });
+
+    return {
+      seats: [...this.seats],
+      me: userId,
+      leroSeats: [...this.unruledSeats],
+      roundNumber: this.roundNumber,
+      roundCount: this.schedule.length,
+      cardsPerPlayer: round.cardsPerPlayer,
+      dealerId: this.seats[round.dealerIndex],
+      trumpSuit: round.trumpSuit,
+      trumpCard: round.trumpCard && { ...round.trumpCard },
+      hand: [...(round.hands.get(userId) ?? [])].map((card) => ({ ...card })),
+      dealtHand: (ownDeal?.cards ?? []).map((card) => ({ ...card })),
+      bidOrder: [...round.bidOrder],
+      bids: Object.fromEntries(this.seats.map((seat) => [seat, round.bids.get(seat) ?? null])),
+      tricks: round.log.tricks.map((trick) => ({
+        leaderId: trick.leaderId,
+        cards: trick.cards.map(copy),
+        winnerId: trick.winnerId,
+      })),
+      leaderId: this.seats[round.leaderIndex],
+      trick: round.trick.map(copy),
+      totals: Object.fromEntries(this.totals),
     };
   }
 

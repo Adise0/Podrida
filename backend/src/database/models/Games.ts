@@ -1,5 +1,17 @@
-import { GameStatus, ranks, suits, type Rank, type Suit } from "@podrida/shared";
+import {
+  BotDifficulty,
+  defaultRoomSettings,
+  GameStatus,
+  ranks,
+  suits,
+  type Rank,
+  type RoomSettings,
+  type Suit,
+} from "@podrida/shared";
 import { HydratedDocument, model, Schema, Types } from "mongoose";
+
+// Ids in the record (players, dealers, trick cards...) are user ids, or a bot's own id: an
+// ObjectId too, but with no account behind it (see players[].bot).
 
 // The stored record of a game. A room only gets one when it starts: until then it only lives in
 // memory (see realtime/rooms). The game itself is played live in memory too (realtime/games), this
@@ -13,14 +25,19 @@ export interface DatabaseGameData {
   roomName: string;
   host: Types.ObjectId;
   // Who sat down when it started. The username is a copy, the account may change or go. Kicked
-  // players stay listed, with when and by whom (the host or an admin).
+  // players stay listed, with when and by whom (the host or an admin), and the bot that played
+  // their seat from then on. Bots have an id of their own (no account), their difficulty, and
+  // the seed of their randomness (so a reported odd play can be replayed).
   players: {
     user: Types.ObjectId;
     username: string;
+    bot?: { difficulty: BotDifficulty; seed: number };
     kickedAt?: Date;
     kickedBy?: Types.ObjectId;
+    takenOverBy?: BotDifficulty;
     total: number; // Points so far, the final score once it's over.
   }[];
+  settings: RoomSettings;
   // Every finished round, as it's scored, with enough to replay it: the hands as dealt, the trump
   // card (none in full-deck rounds), and every trick card by card.
   rounds: {
@@ -65,8 +82,19 @@ const GameSchema = new Schema<DatabaseGameData>(
         _id: false,
         user: { type: Schema.Types.ObjectId, ref: "Users", required: true },
         username: { type: String, required: true },
+        bot: {
+          type: new Schema(
+            {
+              difficulty: { type: String, enum: Object.values(BotDifficulty), required: true },
+              seed: { type: Number, required: true },
+            },
+            { _id: false },
+          ),
+          default: undefined,
+        },
         kickedAt: Date,
         kickedBy: { type: Schema.Types.ObjectId, ref: "Users" },
+        takenOverBy: { type: String, enum: Object.values(BotDifficulty) },
         total: { type: Number, default: 0 },
       },
     ],
@@ -110,6 +138,11 @@ const GameSchema = new Schema<DatabaseGameData>(
         ],
       },
     ],
+    // Games stored before there were settings get the defaults.
+    settings: {
+      _id: false,
+      botThinkingMaxMs: { type: Number, default: defaultRoomSettings.botThinkingMaxMs },
+    },
     roundCount: { type: Number, required: true },
     status: {
       type: String,

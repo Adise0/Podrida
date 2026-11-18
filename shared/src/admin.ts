@@ -1,4 +1,5 @@
 // The admin side of the contract (everything under /admin).
+import type { BotDifficulty } from "./bots";
 import type { GameStatus } from "./rooms";
 import type { MyUser, UserRole } from "./user";
 
@@ -45,6 +46,8 @@ export interface AdminGamePlayer {
   username: string; // As it was when the game started.
   kickedAt?: string;
   kickedBy?: string; // A user id: the host or an admin.
+  takenOverBy?: BotDifficulty; // The bot that played their seat after the kick.
+  bot?: { difficulty: BotDifficulty; seed: number }; // A bot (its id has no account).
   total: number; // Points so far.
   isConnected?: boolean; // Only while the game is being played.
 }

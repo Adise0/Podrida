@@ -13,7 +13,7 @@ import styled, { css, keyframes } from "styled-components";
 import { CardFace, SuitOnlyCard } from "../cards/PlayingCard";
 import type { Box, GameLayout } from "../layout";
 import { fs, g, label, panel, uu } from "../tokens";
-import { GameAvatar } from "./primitives";
+import { GameAvatar, PlayerName } from "./primitives";
 
 const at = (box: Box): CSSProperties => ({ left: box.x, top: box.y, width: box.w, height: box.h });
 
@@ -357,10 +357,12 @@ const SummaryRows = styled.div`
 
 const SummaryRow = styled.div`
   display: grid;
-  grid-template-columns: ${uu(22)} 1fr auto ${uu(48)} ${uu(48)};
+  grid-template-columns: auto 1fr auto ${uu(48)} ${uu(48)};
   align-items: center;
   gap: ${uu(10)};
-  font-size: ${fs(13)};
+  /* Tighter when there are more results than room (see RoundSummary). */
+  font-size: max(10px, calc(${fs(13)} * var(--row-scale, 1)));
+  line-height: 1.2;
 
   span:nth-child(2) {
     overflow: hidden;
@@ -458,20 +460,34 @@ export function RoundSummary({
 }: RoundSummaryProps) {
   const byId = Object.fromEntries(game.players.map((player) => [player.userId, player]));
   const [remaining] = useState(() => Math.max(0, (endsAt ?? Date.now()) - Date.now()));
-  const width = Math.min(layout.centre.w, 420 * layout.u);
-  const box = {
-    x: layout.centrePoint.x - width / 2,
-    y: layout.cardsRow.y,
-    w: width,
-    h: layout.cardsRow.h,
-  };
+  const { u } = layout;
+  const width = Math.min(layout.centre.w, 420 * u);
+  const x = layout.centrePoint.x - width / 2;
+  // Its room: the card row, down over the last action, heading and hint (hidden meanwhile: the
+  // summary says it all). With 5 or 6 results that may not be enough: it grows upward, up to the
+  // seats above, and past that the rows get tighter.
+  const bottom = layout.hint.y + layout.hint.h;
+  const rows = record.results.length;
+  const chrome = (10 + 12 + 26 + 22) * u; // Padding, title and link.
+  const needed = chrome + rows * 23 * u;
+  const ceiling = layout.seats.reduce(
+    (top, seat) => {
+      const overlaps = seat.box.x < x + width && seat.box.x + seat.box.w > x;
+      const seatBottom = seat.box.y + seat.box.h;
+      return overlaps && seatBottom <= layout.cardsRow.y ? Math.max(top, seatBottom + 8 * u) : top;
+    },
+    layout.topBar.y + layout.topBar.h + 8 * u,
+  );
+  const height = Math.max(bottom - layout.cardsRow.y, Math.min(needed, bottom - ceiling));
+  const box = { x, y: bottom - height, w: width, h: height };
+  const rowScale = Math.min(1, (height - chrome) / (rows * 23 * u));
 
   return (
     <SummaryPanel style={at(box)} role="status" data-box="round summary">
       <SummaryTitle>
         Round {record.number} · {record.cardsPerPlayer} card{record.cardsPerPlayer === 1 ? "" : "s"}
       </SummaryTitle>
-      <SummaryRows>
+      <SummaryRows style={{ "--row-scale": rowScale } as CSSProperties}>
         {record.results.map((result) => {
           const player = byId[result.userId];
           return (
@@ -480,9 +496,12 @@ export function RoundSummary({
                 name={player.username}
                 avatarUrl={player.avatarUrl}
                 seat={seats[result.userId]}
-                size={22 * layout.u}
+                size={Math.max(12, 22 * u * rowScale)}
+                bot={player.bot?.difficulty}
               />
-              <span>{player.username}</span>
+              <span>
+                <PlayerName name={player.username} isBot={Boolean(player.bot)} />
+              </span>
               <span>
                 bid {result.bid} · won {result.won}
               </span>

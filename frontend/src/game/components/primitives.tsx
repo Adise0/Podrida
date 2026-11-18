@@ -2,6 +2,8 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { API_URL } from "../../api/client";
 import { avatarFills, darkControl, fs, g, uu } from "../tokens";
+import { initialsOf } from "../../lib/initials";
+import { botDifficultyLabels, type BotDifficulty } from "@podrida/shared";
 
 // TOOLTIPS: a dark label under the element, on hover and keyboard focus.
 
@@ -224,15 +226,8 @@ interface GameAvatarProps {
   size: number;
   ring?: AvatarRing;
   isAway?: boolean;
+  bot?: BotDifficulty; // Hovering it says "Bot · Skilled".
 }
-
-const initials = (name: string) =>
-  name
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("") || "?";
 
 // Only the initials (or the picture) and the turn ring: roles go after the name (RolePills).
 export function GameAvatar({
@@ -242,6 +237,7 @@ export function GameAvatar({
   size,
   ring = "none",
   isAway = false,
+  bot,
 }: GameAvatarProps) {
   const src = avatarUrl?.startsWith("/") ? `${API_URL}${avatarUrl}` : avatarUrl;
 
@@ -251,10 +247,27 @@ export function GameAvatar({
       $fill={avatarFills[seat % avatarFills.length]}
       $ring={ring}
       $away={isAway}
+      title={bot ? `Bot · ${botDifficultyLabels[bot]}` : undefined}
       aria-hidden
     >
-      {src ? <img src={src} alt="" draggable={false} /> : initials(name)}
+      {src ? <img src={src} alt="" draggable={false} /> : initialsOf(name)}
     </AvatarCircle>
+  );
+}
+
+const BotTag = styled.span`
+  color: ${g.muted};
+  font-weight: 400;
+`;
+
+// A player's name as a label, with "(Bot)" after a bot's, muted, at the same size. (Sentences
+// like the last action use the name alone.)
+export function PlayerName({ name, isBot }: { name: string; isBot?: boolean }) {
+  return (
+    <>
+      {name}
+      {isBot && <BotTag> (Bot)</BotTag>}
+    </>
   );
 }
 

@@ -1,4 +1,10 @@
-import { isRedSuit, PodridaPhase, suitSymbols, type Game } from "@podrida/shared";
+import {
+  isRedSuit,
+  maxCardsPerPlayer,
+  PodridaPhase,
+  suitSymbols,
+  type Game,
+} from "@podrida/shared";
 import { Fragment, type ReactNode } from "react";
 import styled, { css } from "styled-components";
 import type { Box } from "../layout";
@@ -187,12 +193,14 @@ export function TopBar({ game, box, subtitle, actions }: TopBarProps) {
   const { state } = game;
   const current = stageIndex(state.phase);
   const bidTotal = Object.values(state.bids).reduce<number>((sum, bid) => sum + (bid ?? 0), 0);
-  const peak = Math.ceil(state.roundCount / 2);
+  // Up to the max, one round at the max per player, then down.
+  const max = maxCardsPerPlayer(game.players.length);
+  const peakIndex = state.roundNumber - (max - 1);
   const direction =
-    state.roundNumber < peak
-      ? "ascending"
-      : state.roundNumber === peak
-        ? "the longest round"
+    state.cardsPerPlayer === max
+      ? `longest round ${peakIndex} of ${game.players.length}`
+      : state.roundNumber < max
+        ? "ascending"
         : "descending";
   const cards = `${state.cardsPerPlayer} card${state.cardsPerPlayer === 1 ? "" : "s"}`;
   const showCount =

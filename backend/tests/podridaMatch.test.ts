@@ -80,7 +80,7 @@ describe("a match", () => {
     expect(view).toMatchObject({
       phase: PodridaPhase.dealing,
       roundNumber: 1,
-      roundCount: 33,
+      roundCount: 35,
       cardsPerPlayer: 1,
       isFullDeck: false,
       dealerId: "a",
@@ -156,7 +156,7 @@ describe("a match", () => {
     expect(log.trumpCard?.suit).toBe(finished!.record.trumpSuit);
   });
 
-  test("a seat that plays itself bids 0 and plays its lowest playable card", () => {
+  test("the fallback move (a bot that failed to answer) bids 0 and plays its lowest playable card", () => {
     const match = new PodridaMatch(["a", "b", "c"]);
     while (match.cardsPerPlayer < 5) playOut1Round(match);
     match.beginBidding();

@@ -46,6 +46,11 @@ const GameHead = styled.div`
   }
 `;
 
+const BotTag = styled.span`
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-weight: 400;
+`;
+
 const Players = styled.ol`
   display: flex;
   flex-wrap: wrap;
@@ -94,7 +99,10 @@ function GameItem({ game, meId }: { game: FinishedGameSummary; meId: string }) {
             <PlayerChip key={player.userId} $winner={player.isWinner} $me={player.userId === meId}>
               <Avatar src={player.avatarUrl} name={player.username} size={26} decorative />
               {player.isWinner && <Crown aria-label="Winner">♛</Crown>}
-              <span>{player.username}</span>
+              <span>
+                {player.username}
+                {player.bot && <BotTag> (Bot)</BotTag>}
+              </span>
               <b data-negative={player.total < 0}>{player.total}</b>
             </PlayerChip>
           ))}

@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import Games from "../../src/database/models/Games";
 import Users from "../../src/database/models/Users";
-import { resetLiveGames } from "../../src/realtime/games/gameManager";
+import { resetLiveGames, closeBotPool } from "../../src/realtime/games/gameManager";
 import { resetRooms } from "../../src/realtime/rooms/roomManager";
 import attachRealtime, { RealtimeServer } from "../../src/realtime/socketServer";
 import app from "../../src/server";
@@ -54,6 +54,7 @@ export const useApi = () => {
     // If the setup failed there's no server, and crashing here would hide the real error.
     if (server) {
       await realtime?.close();
+      await closeBotPool();
       server.closeAllConnections();
       await new Promise((resolve) => {
         server.close(resolve);

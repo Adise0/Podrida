@@ -1,11 +1,15 @@
 import { SocketCloseCode } from "@podrida/shared";
 import {
+  addBotData,
   attachGameData,
   bidData,
   createRoomData,
   playCardData,
   kickPlayerData,
   joinRoomData,
+  removeBotData,
+  roomSettingsData,
+  setBotDifficultyData,
   socketAuthData,
 } from "../data/joiObjects/realtimeData";
 import {
@@ -25,12 +29,16 @@ import {
 } from "./games/gameManager";
 import { subscribeToLobby, unsubscribeFromLobby } from "./rooms/lobbyFeed";
 import {
+  addBot,
   createRoom,
   getRoomIdOfUser,
   joinRoom,
   leaveRoom,
   listRooms,
+  removeBot,
+  setBotDifficulty,
   startRoom,
+  updateRoomSettings,
 } from "./rooms/roomManager";
 import SocketRouter from "./socketRouter";
 
@@ -106,6 +114,28 @@ realtimeRouter.on("rooms:leave", {}, ({ userId }) => {
 
 realtimeRouter.on("rooms:start", {}, async ({ userId }) => ({
   gameId: await startRoom(userId),
+}));
+
+// Host only, before the game starts.
+
+realtimeRouter.on("rooms:addBot", { schema: addBotData }, ({ userId, payload }) => ({
+  room: addBot(userId, payload.difficulty),
+}));
+
+realtimeRouter.on("rooms:removeBot", { schema: removeBotData }, ({ userId, payload }) => ({
+  room: removeBot(userId, payload.userId),
+}));
+
+realtimeRouter.on(
+  "rooms:setBotDifficulty",
+  { schema: setBotDifficultyData },
+  ({ userId, payload }) => ({
+    room: setBotDifficulty(userId, payload.userId, payload.difficulty),
+  }),
+);
+
+realtimeRouter.on("rooms:updateSettings", { schema: roomSettingsData }, ({ userId, payload }) => ({
+  room: updateRoomSettings(userId, payload),
 }));
 
 // GAMES. Players can't leave a game. The rules are checked in PodridaMatch.

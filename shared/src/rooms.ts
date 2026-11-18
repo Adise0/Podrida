@@ -1,5 +1,6 @@
 // Rooms (the tables in the lobby, before a game starts) and games (what a room becomes once it
 // starts). Both are sent over the realtime connection, see realtime.ts.
+import type { BotDifficulty, RoomSettings } from "./bots";
 import { podridaLimits, type PodridaRoundRecord, type PodridaState } from "./podrida";
 
 export const roomLimits = <const>{
@@ -15,8 +16,9 @@ export interface RoomMember {
   avatarUrl?: string; // Same as MyUser.avatarUrl: a path on the API.
   joinedAt: string;
   // False while every connection of theirs is down. They're dropped from the room if they don't
-  // come back in time (a page reload is fine).
+  // come back in time (a page reload is fine). Bots are always connected.
   isConnected: boolean;
+  bot?: { difficulty: BotDifficulty }; // A computer player, added by the host. Its userId is its own.
 }
 
 // A room lives in the server's memory only, it isn't stored until it starts a game.
@@ -24,7 +26,8 @@ export interface Room {
   id: string;
   name: string;
   hostId: string; // Starts the game. Passes to the longest-seated member when the host leaves.
-  members: RoomMember[]; // In the order they joined.
+  members: RoomMember[]; // In the order they joined. Bots count toward the limit.
+  settings: RoomSettings;
   createdAt: string;
 }
 
@@ -42,7 +45,8 @@ export interface GamePlayer {
   username: string;
   avatarUrl?: string;
   isConnected: boolean;
-  isKicked: boolean; // Removed by the host or an admin. Their seat stays, empty.
+  isKicked: boolean; // Removed by the host or an admin. Their seat stays, played by a bot.
+  bot?: { difficulty: BotDifficulty }; // A computer player from the start (not a kicked seat).
 }
 
 // The game as it's being played. Its record is stored from the start, the play itself runs live.
@@ -64,6 +68,7 @@ export interface FinishedGamePlayer {
   total: number;
   isWinner: boolean; // Highest total. Ties share the win.
   wasKicked: boolean;
+  bot?: { difficulty: BotDifficulty };
 }
 
 export interface FinishedGameSummary {

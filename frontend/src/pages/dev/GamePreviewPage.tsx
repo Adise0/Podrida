@@ -1,4 +1,5 @@
 import {
+  botDifficulties,
   GameStatus,
   PodridaPhase,
   fullDeck,
@@ -13,7 +14,8 @@ import { GameScreen } from "../../game/GameScreen";
 
 // DEV ONLY (see router/routes.tsx): the game screen with a made-up game, to look at the layout
 // without a backend. /dev/game-preview?players=2..6&phase=bidding|playing|trickEnd|scoring|dealing
-// &cards=N&mine=1 (the local player's turn), and &layoutDebug to outline every area.
+// &cards=N&mine=1 (the local player's turn), &bots=1 (the others are bots), and &layoutDebug to
+// outline every area.
 
 const names = ["Evelyn", "Nora", "Milo", "Arthur", "Beatrice", "Theodore"];
 
@@ -41,6 +43,7 @@ export function GamePreviewPage() {
       (value) => value.replace("_", "") === (params.get("phase") ?? "playing").toUpperCase(),
     ) ?? PodridaPhase.playing;
   const mine = params.get("mine") === "1";
+  const withBots = params.get("bots") === "1";
 
   const ids = names.slice(0, count).map((name) => name.toLowerCase());
   const hands = ids.map((_, seat) => deck.slice(seat * cards, seat * cards + cards));
@@ -120,8 +123,10 @@ export function GamePreviewPage() {
     players: ids.map((userId, seat) => ({
       userId,
       username: names[seat],
-      isConnected: seat !== 3,
+      isConnected: withBots || seat !== 3,
       isKicked: false,
+      ...(withBots &&
+        seat > 0 && { bot: { difficulty: botDifficulties[seat % botDifficulties.length] } }),
     })),
     status: GameStatus.inProgress,
     startedAt: new Date(previewStart).toISOString(),

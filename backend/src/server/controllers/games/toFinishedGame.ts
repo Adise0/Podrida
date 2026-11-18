@@ -6,7 +6,13 @@ import { getAvatarUrl } from "../../utils/users/avatar";
 // The current avatars of everyone in these games, by user id. The usernames are the record's own,
 // as they were when the game was played.
 export const getAvatarUrls = async (games: GameDocument[]) => {
-  const userIds = [...new Set(games.flatMap((game) => game.players.map(({ user }) => user)))];
+  const userIds = [
+    ...new Set(
+      games.flatMap((game) =>
+        game.players.filter((player) => !player.bot).map(({ user }) => user.toString()),
+      ),
+    ),
+  ];
   const users = await Users.find({ _id: { $in: userIds } }).select("avatar");
   return new Map(users.map((user) => [user.id, getAvatarUrl(user.id, user.avatar)]));
 };
@@ -29,6 +35,7 @@ export const toFinishedGameSummary = (
       total: player.total ?? 0,
       isWinner: (player.total ?? 0) === best, // No tie-breaker: a tie shares the win.
       wasKicked: Boolean(player.kickedAt),
+      ...(player.bot && { bot: { difficulty: player.bot.difficulty } }),
     })),
   };
 };

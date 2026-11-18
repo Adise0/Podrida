@@ -61,3 +61,9 @@ export const getPlayerNotInGameError = () =>
 // No record at all, unlike getGameNotFoundError which is about a game not being played.
 export const getGameRecordNotFoundError = () =>
   roomError(ErrorCode.GAME_NOT_FOUND, 404, "Game not found");
+
+export const getCannotKickBotError = () =>
+  roomError(ErrorCode.CANNOT_KICK_BOT, 409, "Bots can't be kicked");
+
+export const getBotNotFoundError = () =>
+  roomError(ErrorCode.BOT_NOT_FOUND, 404, "That bot isn't in this room");

@@ -1,8 +1,17 @@
-import { randomBytes } from "node:crypto";
-import { roomLimits, type Room } from "@podrida/shared";
+import { randomBytes, randomInt } from "node:crypto";
+import {
+  defaultRoomSettings,
+  roomLimits,
+  type BotDifficulty,
+  type Room,
+  type RoomSettings,
+} from "@podrida/shared";
+import { Types } from "mongoose";
+import { pickBotName } from "../../data/bots/botNames";
 import { roomReconnectGraceInSeconds } from "../../data/serverConfig/server-config";
 import {
   getAlreadyInGameError,
+  getBotNotFoundError,
   getAlreadyInRoomError,
   getNotEnoughPlayersError,
   getNotInRoomError,
@@ -25,12 +34,17 @@ import { publishRoomRemoved, publishRoomUpdated } from "./lobbyFeed";
 //
 // Every operation does its awaits first and then checks and changes the state in one go, with no
 // await in between, so two requests (two tabs of one user, say) can't both pass the same check.
+//
+// The host can add bots (computer players) before the game starts: they take a seat like anyone,
+// with a name from their difficulty's list (data/bots), and are never the host. A room with no
+// person left in it closes, its bots with it.
 
 interface LiveMember {
-  userId: string;
+  userId: string; // A bot's is its own id (an ObjectId, no account).
   username: string;
   avatarUrl?: string;
   joinedAt: Date;
+  bot?: { difficulty: BotDifficulty };
   removalTimer?: NodeJS.Timeout; // While all their connections are down.
 }
 
@@ -39,6 +53,7 @@ interface LiveRoom {
   name: string;
   hostId: string;
   members: Map<string, LiveMember>; // In the order they joined.
+  settings: RoomSettings;
   createdAt: Date;
   isStarting: boolean; // Its game is being stored: nobody joins or leaves meanwhile.
 }
@@ -68,15 +83,22 @@ const toRoom = (room: LiveRoom): Room => ({
     username: member.username,
     avatarUrl: member.avatarUrl,
     joinedAt: member.joinedAt.toISOString(),
-    isConnected: isUserConnected(member.userId),
+    isConnected: member.bot ? true : isUserConnected(member.userId),
+    ...(member.bot && { bot: { difficulty: member.bot.difficulty } }),
   })),
+  settings: { ...room.settings },
   createdAt: room.createdAt.toISOString(),
 });
 
 // Tells the members and the lobby. Answers what it sent, for the caller's reply.
 const publishRoom = (room: LiveRoom): Room => {
   const view = toRoom(room);
-  sendToUsers(room.members.keys(), "room:updated", { room: view });
+  const people = [...room.members.values()].filter((member) => !member.bot);
+  sendToUsers(
+    people.map((member) => member.userId),
+    "room:updated",
+    { room: view },
+  );
   publishRoomUpdated(view);
   return view;
 };
@@ -127,15 +149,18 @@ const removeMember = (roomId: string, userId: string) => {
   room.members.delete(userId);
   roomIdByUser.delete(userId);
 
-  if (room.members.size === 0) {
+  const people = [...room.members.values()].filter((member) => !member.bot);
+
+  // Bots don't keep a room open on their own.
+  if (people.length === 0) {
     rooms.delete(room.id);
     publishRoomRemoved(room.id);
     return;
   }
 
-  // The seat passes to whoever has been there the longest.
+  // The seat passes to the person who has been there the longest.
   if (room.hostId === userId) {
-    room.hostId = room.members.keys().next().value as string;
+    room.hostId = people[0].userId;
   }
 
   publishRoom(room);
@@ -151,6 +176,36 @@ const getRoomOfUser = (userId: string) => {
 
   return room;
 };
+
+// The user's room, for something only its host can do before the game starts.
+const getHostedRoom = (userId: string) => {
+  const room = getRoomOfUser(userId);
+
+  if (room.hostId !== userId) {
+    throw getNotRoomHostError();
+  }
+
+  if (room.isStarting) {
+    throw getRoomStartingError();
+  }
+
+  return room;
+};
+
+const getBot = (room: LiveRoom, botId: string) => {
+  const member = room.members.get(botId);
+
+  if (!member?.bot) {
+    throw getBotNotFoundError();
+  }
+
+  return member;
+};
+
+const takenNames = (room: LiveRoom, except?: string) =>
+  [...room.members.values()]
+    .filter((member) => member.userId !== except)
+    .map((member) => member.username);
 
 export const getRoomIdOfUser = (userId: string) => roomIdByUser.get(userId);
 
@@ -168,6 +223,7 @@ export const createRoom = async (userId: string, name: string): Promise<Room> =>
     name,
     hostId: userId,
     members: new Map(),
+    settings: { ...defaultRoomSettings },
     createdAt: new Date(),
     isStarting: false,
   };
@@ -214,6 +270,54 @@ export const leaveRoom = (userId: string) => {
   removeMember(room.id, userId);
 };
 
+// A bot takes the next seat, with a free name from its difficulty's list.
+export const addBot = (userId: string, difficulty: BotDifficulty): Room => {
+  const room = getHostedRoom(userId);
+
+  if (room.members.size >= roomLimits.maxPlayers) {
+    throw getRoomFullError();
+  }
+
+  const id = new Types.ObjectId().toHexString();
+  room.members.set(id, {
+    userId: id,
+    username: pickBotName(difficulty, takenNames(room), randomInt),
+    joinedAt: new Date(),
+    bot: { difficulty },
+  });
+  return publishRoom(room);
+};
+
+export const removeBot = (userId: string, botId: string): Room => {
+  const room = getHostedRoom(userId);
+  getBot(room, botId);
+  room.members.delete(botId);
+  return publishRoom(room);
+};
+
+// A new difficulty comes with a new name, from that difficulty's list.
+export const setBotDifficulty = (
+  userId: string,
+  botId: string,
+  difficulty: BotDifficulty,
+): Room => {
+  const room = getHostedRoom(userId);
+  const bot = getBot(room, botId);
+
+  if (bot.bot?.difficulty !== difficulty) {
+    bot.bot = { difficulty };
+    bot.username = pickBotName(difficulty, takenNames(room, botId), randomInt);
+  }
+
+  return publishRoom(room);
+};
+
+export const updateRoomSettings = (userId: string, settings: Partial<RoomSettings>): Room => {
+  const room = getHostedRoom(userId);
+  room.settings = { ...room.settings, ...settings };
+  return publishRoom(room);
+};
+
 // The room becomes a game: it's stored, its members become the players, and it leaves the lobby.
 export const startRoom = async (userId: string): Promise<string> => {
   const room = getRoomOfUser(userId);
@@ -239,11 +343,13 @@ export const startRoom = async (userId: string): Promise<string> => {
     gameId = await createGame({
       roomName: room.name,
       hostId: room.hostId,
-      players: members.map(({ userId: id, username, avatarUrl }) => ({
+      players: members.map(({ userId: id, username, avatarUrl, bot }) => ({
         userId: id,
         username,
         avatarUrl,
+        ...(bot && { bot }),
       })),
+      settings: room.settings,
     });
   } catch (error) {
     room.isStarting = false;
@@ -257,7 +363,7 @@ export const startRoom = async (userId: string): Promise<string> => {
   rooms.delete(room.id);
   publishRoomRemoved(room.id);
   sendToUsers(
-    members.map((member) => member.userId),
+    members.filter((member) => !member.bot).map((member) => member.userId),
     "room:gameStarted",
     { roomId: room.id, gameId },
   );

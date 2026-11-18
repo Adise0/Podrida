@@ -1,3 +1,4 @@
+import type { BotDifficulty, RoomSettings } from "@podrida/shared";
 import { realtime } from "../../api/realtime";
 import { dispatcher } from "../../flux/dispatcher";
 
@@ -20,6 +21,27 @@ export async function joinRoom(roomId: string) {
 export async function leaveRoom() {
   await realtime.request("rooms:leave");
   dispatcher.dispatch({ type: "ROOM_LEFT" });
+}
+
+// Bots and settings: the host's, before the game starts.
+export async function addBot(difficulty: BotDifficulty) {
+  const { room } = await realtime.request("rooms:addBot", { difficulty });
+  dispatcher.dispatch({ type: "ROOM_UPDATED", room });
+}
+
+export async function removeBot(userId: string) {
+  const { room } = await realtime.request("rooms:removeBot", { userId });
+  dispatcher.dispatch({ type: "ROOM_UPDATED", room });
+}
+
+export async function setBotDifficulty(userId: string, difficulty: BotDifficulty) {
+  const { room } = await realtime.request("rooms:setBotDifficulty", { userId, difficulty });
+  dispatcher.dispatch({ type: "ROOM_UPDATED", room });
+}
+
+export async function updateRoomSettings(settings: Partial<RoomSettings>) {
+  const { room } = await realtime.request("rooms:updateSettings", settings);
+  dispatcher.dispatch({ type: "ROOM_UPDATED", room });
 }
 
 export async function startGame() {

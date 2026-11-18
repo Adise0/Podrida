@@ -7,3 +7,4 @@ export * from "./admin";
 export * from "./rooms";
 export * from "./realtime";
 export * from "./podrida";
+export * from "./bots";

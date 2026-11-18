@@ -15,6 +15,8 @@ const toAdminGame = (game: GameDocument): AdminGame => {
       username: player.username,
       kickedAt: player.kickedAt?.toISOString(),
       kickedBy: player.kickedBy?.toString(),
+      takenOverBy: player.takenOverBy,
+      ...(player.bot && { bot: { difficulty: player.bot.difficulty, seed: player.bot.seed } }),
       total: player.total ?? 0,
       isConnected: connections?.[player.user.toString()],
     })),

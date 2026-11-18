@@ -1,4 +1,4 @@
-import { ranks, roomLimits, suits } from "@podrida/shared";
+import { BotDifficulty, ranks, roomLimits, roomSettingsLimits, suits } from "@podrida/shared";
 import Joi from "joi";
 import { JoiObjectId } from "./joiTypes";
 
@@ -55,3 +55,25 @@ export const playCardData = Joi.object({
       .required(),
   }).required(),
 });
+
+const botDifficulty = Joi.string().valid(...Object.values(BotDifficulty));
+
+export const addBotData = Joi.object({
+  difficulty: botDifficulty.required(),
+});
+
+// Bot ids are ObjectIds, like user ids (with no account behind them).
+export const removeBotData = Joi.object({
+  userId: JoiObjectId().required(),
+});
+
+export const setBotDifficultyData = Joi.object({
+  userId: JoiObjectId().required(),
+  difficulty: botDifficulty.required(),
+});
+
+const { botThinkingMaxMs } = roomSettingsLimits;
+
+export const roomSettingsData = Joi.object({
+  botThinkingMaxMs: Joi.number().integer().min(botThinkingMaxMs.min).max(botThinkingMaxMs.max),
+}).min(1);

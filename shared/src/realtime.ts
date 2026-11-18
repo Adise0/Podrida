@@ -12,6 +12,7 @@
 // on a WebSocket, and a token in the URL ends up in logs). Send it again with every new token: the
 // connection closes when the token it was opened with expires.
 import type { ResponseError } from "./errors";
+import type { BotDifficulty, RoomSettings } from "./bots";
 import type { Card } from "./podrida";
 import type { Game, Room } from "./rooms";
 
@@ -46,6 +47,15 @@ export interface SocketRequests {
   "rooms:join": { payload: { roomId: string }; reply: { room: Room } }; // Joining yours again is fine.
   "rooms:leave": { payload: undefined; reply: null };
   "rooms:start": { payload: undefined; reply: { gameId: string } }; // Host only.
+  // Host only, before the game starts. A bot gets a name from its difficulty's list, and a new
+  // one when its difficulty changes.
+  "rooms:addBot": { payload: { difficulty: BotDifficulty }; reply: { room: Room } };
+  "rooms:removeBot": { payload: { userId: string }; reply: { room: Room } };
+  "rooms:setBotDifficulty": {
+    payload: { userId: string; difficulty: BotDifficulty };
+    reply: { room: Room };
+  };
+  "rooms:updateSettings": { payload: Partial<RoomSettings>; reply: { room: Room } };
 
   // Players only. A player counts as connected to the game while one of their connections is
   // attached to it (on the game page), until it detaches or closes.

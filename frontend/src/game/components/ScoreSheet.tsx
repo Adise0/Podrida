@@ -1,16 +1,23 @@
-import { isRedSuit, suitSymbols, type PodridaRoundRecord, type Suit } from "@podrida/shared";
+import {
+  type BotDifficulty,
+  isRedSuit,
+  suitSymbols,
+  type PodridaRoundRecord,
+  type Suit,
+} from "@podrida/shared";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import styled, { css, keyframes } from "styled-components";
 import { g, goldButton, panel } from "../tokens";
 import { CloseIcon, CrownIcon } from "./Icons";
-import { GameAvatar, SecondaryButton } from "./primitives";
+import { GameAvatar, PlayerName, SecondaryButton } from "./primitives";
 
 export interface SheetPlayer {
   userId: string;
   username: string;
   avatarUrl?: string;
   seat: number;
+  bot?: BotDifficulty;
 }
 
 export interface CurrentRound {
@@ -87,9 +94,12 @@ export function StandingsStrip({
               avatarUrl={player.avatarUrl}
               seat={player.seat}
               size={24}
+              bot={player.bot}
             />
             {total === best && <CrownIcon />}
-            <span>{player.username}</span>
+            <span>
+              <PlayerName name={player.username} isBot={Boolean(player.bot)} />
+            </span>
             <b data-negative={total < 0}>{total}</b>
           </StandingChip>
         );
@@ -218,16 +228,18 @@ const BidLine = styled.span`
   color: ${g.text};
 `;
 
-const PointsLine = styled.span<{ $met: boolean }>`
+// The running total after the round, then the round's points (gold met, red missed), smaller.
+const RunningLine = styled.span`
   display: block;
-  color: ${({ $met }) => ($met ? g.goldText : g.danger)};
+  color: ${g.text};
   font-weight: 600;
 `;
 
-const RunningLine = styled.span`
+const PointsLine = styled.span<{ $met: boolean }>`
   display: block;
-  color: ${g.muted};
+  color: ${({ $met }) => ($met ? g.goldText : g.danger)};
   font-size: 11px;
+  opacity: 0.75;
 `;
 
 const TotalCell = styled.td<{ $negative: boolean }>`
@@ -263,7 +275,9 @@ export function ScoreTable({
 }: ScoreTableProps) {
   const blockCount = Math.ceil(schedule.length / roundsPerBlock);
   const blockSize = Math.ceil(schedule.length / blockCount);
-  const peak = schedule.indexOf(Math.max(...schedule)) + 1;
+  // The rounds at the most cards (one per player), outlined.
+  const max = Math.max(...schedule);
+  const isPeakRound = (number: number) => schedule[number - 1] === max;
   const byNumber = new Map(history.map((record) => [record.number, record]));
 
   const blocks = Array.from({ length: blockCount }, (_, index) =>
@@ -297,10 +311,10 @@ export function ScoreTable({
                       key={number}
                       scope="col"
                       $current={isCurrent}
-                      $peak={number === peak}
+                      $peak={isPeakRound(number)}
                     >
-                      <strong>{number}</strong>
-                      {cards} card{cards === 1 ? "" : "s"}
+                      <strong aria-label={`${cards} card${cards === 1 ? "" : "s"}`}>{cards}</strong>
+                      Round {number}
                       <br />
                       {trump && <SuitMark $suit={trump}>{suitSymbols[trump]}</SuitMark>}
                       {dealer && ` · ${initials(names[dealer] ?? "")}`}
@@ -324,14 +338,15 @@ export function ScoreTable({
                         avatarUrl={player.avatarUrl}
                         seat={player.seat}
                         size={22}
+                        bot={player.bot}
                       />
-                      {player.username}
+                      <PlayerName name={player.username} isBot={Boolean(player.bot)} />
                     </span>
                   </NameCell>
                   {rounds.map(({ number }) => {
                     const record = byNumber.get(number);
                     const result = record?.results.find((entry) => entry.userId === player.userId);
-                    const isPeak = number === peak;
+                    const isPeak = isPeakRound(number);
 
                     if (result) {
                       const met = result.bid === result.won;
@@ -340,12 +355,12 @@ export function ScoreTable({
                           <BidLine>
                             {result.bid} / {result.won}
                           </BidLine>
+                          <RunningLine>{result.total}</RunningLine>
                           <PointsLine $met={met}>
                             {result.points > 0
                               ? `+${result.points}`
                               : `−${Math.abs(result.points)}`}
                           </PointsLine>
-                          <RunningLine>{result.total}</RunningLine>
                         </Cell>
                       );
                     }

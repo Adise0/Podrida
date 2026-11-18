@@ -24,18 +24,21 @@ const trick = (...codes: string[]): PlayedCard[] =>
 
 describe("rounds", () => {
   test.each([
-    [2, 26, 51],
-    [3, 17, 33],
-    [4, 13, 25],
-    [5, 10, 19],
-    [6, 8, 15],
+    [2, 26, 52],
+    [3, 17, 35],
+    [4, 13, 28],
+    [5, 10, 23],
+    [6, 8, 20],
   ])("%i players: up to %i cards, %i rounds", (players, max, rounds) => {
     expect(maxCardsPerPlayer(players)).toBe(max);
     expect(roundSchedule(players)).toHaveLength(rounds);
   });
 
-  test("go up to the maximum once, then back down", () => {
-    expect(roundSchedule(6)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1]);
+  test("go up to the maximum, play it once per player, then back down", () => {
+    expect(roundSchedule(6)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8, 8, 7, 6, 5, 4, 3, 2, 1]);
+    expect(roundSchedule(4)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 13, 13, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
+    ]);
   });
 });
 

@@ -71,6 +71,8 @@ export enum ErrorCode {
   NOT_IN_GAME = "NOT_IN_GAME",
   NOT_GAME_HOST = "NOT_GAME_HOST",
   CANNOT_KICK_YOURSELF = "CANNOT_KICK_YOURSELF", // The host ends the game instead.
+  BOT_NOT_FOUND = "BOT_NOT_FOUND", // No bot with that id in the room.
+  CANNOT_KICK_BOT = "CANNOT_KICK_BOT", // Bots can't be kicked from a game: it would only hand the seat to another bot.
   WRONG_PHASE = "WRONG_PHASE", // Eg. a bid while cards are being played.
   NOT_YOUR_TURN = "NOT_YOUR_TURN",
   INVALID_BID = "INVALID_BID", // From 0 to the cards of the round.

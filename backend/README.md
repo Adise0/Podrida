@@ -279,12 +279,32 @@ Players can't leave a game. It ends on its own after the last round (`FINISHED`)
 | Status        | When                                                                        |
 | ------------- | --------------------------------------------------------------------------- |
 | `ENDED_EARLY` | The host sent `games:end`, or an admin ended it. `endedBy` records who      |
-| `ABANDONED`   | No player was connected for `gameAbandonAfterSeconds`                       |
+| `ABANDONED`   | No person was connected for `gameAbandonAfterSeconds` (bots don't count)    |
 | `INTERRUPTED` | It was still running when the server started again: its live state was lost |
 
-The host can kick players (`games:kick`), but not themselves. A kicked player's seat stays, and
-plays itself: it bids 0 and plays its lowest playable card. The record keeps `kickedAt` and
-`kickedBy`, and they're free to join another room.
+The host can kick players (`games:kick`), but not themselves, and not bots. A kicked player's seat
+stays, played by a Casual bot from then on (`kickedSeatBotDifficulty`). The record keeps
+`kickedAt`, `kickedBy` and `takenOverBy`, and they're free to join another room.
+
+**Bots.** Before the game starts, the host can add computer players (`rooms:addBot` with a
+difficulty: Lero, Beginner, Casual, Skilled or Expert), change their difficulty
+(`rooms:setBotDifficulty`, which also gives them a new name) and remove them (`rooms:removeBot`).
+Bots count toward the 6 seats, are always connected and never host, and a room with no person
+left in it closes. Their names come from an editable list,
+[names.json](src/data/bots/names.json): one list per difficulty plus a shared one, at most
+12 characters each, never twice in a room. A bot's id is an ObjectId with no account behind it,
+so the game record stores bots like players, with `bot: { difficulty, seed }`.
+
+The bots themselves are the [`@podrida/bots`](../bots/README.md) package. On a bot's turn the game
+manager gives it `PodridaMatch.botViewFor()` (its own hand and everything public about the round,
+never the other hands or the undealt cards) and asks it for a bid or a card in a worker thread
+(`botWorkerThreads`), so a search never blocks the server. It then waits the room's thinking time
+before playing: between half of `settings.botThinkingMaxMs` and all of it (a quarter on a forced
+move), counted from the start of the turn. The host sets it with `rooms:updateSettings` (0 to 5
+seconds, 2 by default), and it's stored on the game. If a bot fails to answer within
+`botDecisionTimeoutMs`, or answers something the rules refuse, the seat plays the simplest legal
+move instead and it's logged. Lero bots don't know the rules: `PodridaMatch` accepts their cards
+without checking them against the play rules (only that the card is theirs, on their turn).
 
 Players look back on their own finished games over REST: `GET /games/finished` (paginated, with
 each player's final points and the winners) and `GET /games/finished/:gameId` (every round's bids

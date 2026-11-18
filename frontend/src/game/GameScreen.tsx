@@ -366,6 +366,7 @@ export function GameScreen({ game, meId, forceOnline = false }: GameScreenProps)
     username: player.username,
     avatarUrl: player.avatarUrl,
     seat: seatOf[player.userId],
+    bot: player.bot?.difficulty,
   }));
   const schedule = roundSchedule(game.players.length);
 
@@ -404,7 +405,10 @@ export function GameScreen({ game, meId, forceOnline = false }: GameScreenProps)
     );
 
   const isHost = game.hostId === meId && !isFinished;
-  const kickable = game.players.filter((player) => player.userId !== meId && !player.isKicked);
+  // Bots can't be kicked (a kicked seat is played by a bot anyway).
+  const kickable = game.players.filter(
+    (player) => player.userId !== meId && !player.isKicked && !player.bot,
+  );
 
   // THE BOTTOM BAR'S ACTION
 
@@ -575,13 +579,18 @@ export function GameScreen({ game, meId, forceOnline = false }: GameScreenProps)
         />
       ) : null}
 
-      <LastAction text={lastActionText(game, meId)} box={layout.lastAction} />
-      <StatusHeading
-        heading={status.heading}
-        hint={settings.ruleHints ? status.hint : ""}
-        error={error}
-        layout={layout}
-      />
+      {/* The round summary covers them: it says it all. */}
+      {!(state.phase === PodridaPhase.scoring && lastRecord) && (
+        <>
+          <LastAction text={lastActionText(game, meId)} box={layout.lastAction} />
+          <StatusHeading
+            heading={status.heading}
+            hint={settings.ruleHints ? status.hint : ""}
+            error={error}
+            layout={layout}
+          />
+        </>
+      )}
 
       <TurnArrow target={arrowTarget} centre={layout.centrePoint} size={layout.mySlot.w} />
 
@@ -683,7 +692,7 @@ export function GameScreen({ game, meId, forceOnline = false }: GameScreenProps)
       {kickTarget && (
         <ConfirmDialog
           title={`Kick ${kickTarget.username}?`}
-          body="They're taken out of the game and can't come back to it. Their seat stays and plays itself: it bids 0 and plays its lowest card."
+          body="They're taken out of the game and can't come back to it. Their seat stays, played by a Casual bot until the end."
           cancelLabel="Cancel"
           confirmLabel="Kick"
           isPending={isDialogPending}

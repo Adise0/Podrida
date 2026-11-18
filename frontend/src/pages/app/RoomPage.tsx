@@ -1,21 +1,93 @@
-import { ErrorCode, roomLimits } from "@podrida/shared";
+import { ErrorCode, roomLimits, roomSettingsLimits } from "@podrida/shared";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import styled from "styled-components";
 import { hasErrorCode, isApiError } from "../../api/client";
+import { getErrorMessage } from "../../api/errorMessages";
 import { ErrorAlert } from "../../components/ErrorAlert";
 import { PageTitle } from "../../components/PageTitle";
+import { AddBotSeat, BotSeatControls } from "../../components/play/BotControls";
 import { EmptySeat, Seat, SeatGrid } from "../../components/play/Seat";
 import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { Card, CardHeader, MutedText } from "../../components/ui/Card";
 import { Row, Stack, TextLink } from "../../components/ui/layout";
 import { Spinner } from "../../components/ui/Spinner";
+import { Tabs } from "../../components/ui/Tabs";
 import { useRequest } from "../../hooks/useRequest";
 import { notify } from "../../stores/notifications/actions";
-import { joinRoom, leaveRoom, startGame } from "../../stores/play/actions";
+import {
+  addBot,
+  joinRoom,
+  leaveRoom,
+  removeBot,
+  setBotDifficulty,
+  startGame,
+  updateRoomSettings,
+} from "../../stores/play/actions";
 import { usePlay } from "../../stores/play/store";
 import { useUser } from "../../stores/user/store";
 import { PageHeading } from "./PageHeading";
+
+const ThinkingRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.space(3)};
+  font-size: 14px;
+
+  input {
+    width: min(240px, 100%);
+    accent-color: ${({ theme }) => theme.colors.gold};
+  }
+`;
+
+const seconds = (milliseconds: number) =>
+  `${(milliseconds / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 })} s`;
+
+// The bots' delay before each move (they wait between half this and this), for the table to follow.
+function BotThinkingSetting({ value, isHost }: { value: number; isHost: boolean }) {
+  const [draft, setDraft] = useState<number | null>(null);
+  const shown = draft ?? value;
+  const { min, max, step } = roomSettingsLimits.botThinkingMaxMs;
+
+  const save = async () => {
+    if (draft === null || draft === value) return;
+    try {
+      await updateRoomSettings({ botThinkingMaxMs: draft });
+    } catch {
+      notify("Couldn't change the bots' thinking time.", "error");
+    } finally {
+      setDraft(null);
+    }
+  };
+
+  if (!isHost) {
+    return <MutedText>Bots take up to {seconds(value)} per move.</MutedText>;
+  }
+
+  return (
+    <ThinkingRow>
+      <label htmlFor="bot-thinking">Bot thinking time, up to</label>
+      <input
+        id="bot-thinking"
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={shown}
+        onChange={(event) => setDraft(Number(event.target.value))}
+        onPointerUp={save}
+        onKeyUp={save}
+        onBlur={save}
+      />
+      <strong>{seconds(shown)}</strong>
+      <MutedText>
+        {shown === 0 ? "Bots play at once." : `At least ${seconds(shown / 2)}.`}
+      </MutedText>
+    </ThinkingRow>
+  );
+}
 
 // Opening a room's page sits you down at it, so its link works as an invite.
 export function RoomPage() {
@@ -24,6 +96,7 @@ export function RoomPage() {
   const play = usePlay();
   const { user } = useUser();
   const [wasSeatedHere, setWasSeatedHere] = useState(false);
+  const [tab, setTab] = useState<"table" | "settings">("table");
 
   const join = useRequest(joinRoom);
   const runJoin = join.run;
@@ -134,6 +207,14 @@ export function RoomPage() {
   const emptySeats = roomLimits.maxPlayers - room.members.length;
   const canStart = room.members.length >= roomLimits.minPlayers;
 
+  const botAction = async (action: () => Promise<unknown>, failure: string) => {
+    try {
+      await action();
+    } catch (error) {
+      notify(`${failure} ${getErrorMessage(error)}`, "error");
+    }
+  };
+
   const copyInvite = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -152,30 +233,93 @@ export function RoomPage() {
       />
 
       <Card>
-        <CardHeader
-          title="At the table"
-          description={
-            isHost
-              ? "You're the host: start the game once everyone has sat down."
-              : "Waiting for the host to start the game."
-          }
-        />
         <Stack $gap={5}>
-          <SeatGrid>
-            {room.members.map((member) => (
-              <Seat
-                key={member.userId}
-                username={member.username}
-                avatarUrl={member.avatarUrl}
-                isHost={member.userId === room.hostId}
-                isYou={member.userId === user.id}
-                isConnected={member.isConnected}
-              />
-            ))}
-            {Array.from({ length: emptySeats }, (_, index) => (
-              <EmptySeat key={index} />
-            ))}
-          </SeatGrid>
+          <Tabs
+            label="Table"
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              {
+                id: "table",
+                label: "Table",
+                panel: (
+                  <Stack $gap={5}>
+                    <CardHeader
+                      title="At the table"
+                      description={
+                        isHost
+                          ? "You're the host: start the game once everyone has sat down. Click an open seat to add a bot."
+                          : "Waiting for the host to start the game."
+                      }
+                    />
+                    <SeatGrid>
+                      {room.members.map((member) => (
+                        <Seat
+                          key={member.userId}
+                          username={member.username}
+                          avatarUrl={member.avatarUrl}
+                          isHost={member.userId === room.hostId}
+                          isYou={member.userId === user.id}
+                          isConnected={member.isConnected}
+                          isBot={Boolean(member.bot)}
+                          action={
+                            member.bot && (
+                              <BotSeatControls
+                                name={member.username}
+                                difficulty={member.bot.difficulty}
+                                isHost={isHost}
+                                onChange={(difficulty) =>
+                                  botAction(
+                                    () => setBotDifficulty(member.userId, difficulty),
+                                    "Couldn't change the bot.",
+                                  )
+                                }
+                                onRemove={() =>
+                                  botAction(
+                                    () => removeBot(member.userId),
+                                    "Couldn't remove the bot.",
+                                  )
+                                }
+                              />
+                            )
+                          }
+                        />
+                      ))}
+                      {Array.from({ length: emptySeats }, (_, index) =>
+                        isHost ? (
+                          <AddBotSeat
+                            key={index}
+                            onAdd={(difficulty) =>
+                              botAction(() => addBot(difficulty), "Couldn't add a bot.")
+                            }
+                          />
+                        ) : (
+                          <EmptySeat key={index} />
+                        ),
+                      )}
+                    </SeatGrid>
+                  </Stack>
+                ),
+              },
+              {
+                id: "settings",
+                label: "Settings",
+                panel: (
+                  <Stack $gap={5}>
+                    <CardHeader
+                      title="Settings"
+                      description={
+                        isHost
+                          ? "How this table plays. Only you, the host, can change them."
+                          : "How this table plays. The host chooses them."
+                      }
+                    />
+                    <BotThinkingSetting value={room.settings.botThinkingMaxMs} isHost={isHost} />
+                  </Stack>
+                ),
+              },
+            ]}
+          />
 
           {play.status !== "online" && (
             <Alert tone="warning">Connection lost. Your seat is kept while we reconnect.</Alert>
@@ -204,7 +348,8 @@ export function RoomPage() {
           </Row>
           {isHost && !canStart && (
             <MutedText>
-              A game needs at least {roomLimits.minPlayers} players. Share the invite link!
+              A game needs at least {roomLimits.minPlayers} players. Share the invite link, or click
+              an open seat to add a bot.
             </MutedText>
           )}
         </Stack>

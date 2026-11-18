@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { API_URL } from "../api/client";
+import { initialsOf } from "../lib/initials";
 
 const Circle = styled.span<{ $size: number }>`
   display: inline-grid;
@@ -29,14 +30,6 @@ const Circle = styled.span<{ $size: number }>`
 const resolveAvatarSrc = (src?: string | null) =>
   src?.startsWith("/") ? `${API_URL}${src}` : (src ?? undefined);
 
-const getInitials = (name: string) =>
-  name
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("") || "?";
-
 interface AvatarProps {
   src?: string | null;
   name: string; // For the initials when there's no picture, and the alt text.
@@ -60,7 +53,7 @@ export function Avatar({ src, name, size = 40, decorative = false }: AvatarProps
       {showImage ? (
         <img src={resolved} alt="" draggable={false} onError={() => setFailedSrc(resolved)} />
       ) : (
-        getInitials(name)
+        initialsOf(name)
       )}
     </Circle>
   );

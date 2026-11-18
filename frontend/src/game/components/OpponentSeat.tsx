@@ -4,7 +4,7 @@ import { CardBack } from "../cards/PlayingCard";
 import type { Box } from "../layout";
 import { fs, g, uu } from "../tokens";
 import { BidDots } from "./BidDots";
-import { Chip, GameAvatar, RolePills } from "./primitives";
+import { Chip, GameAvatar, PlayerName, RolePills } from "./primitives";
 
 // Everything inside the seat's content box (see layout.ts): avatar 44, name 18, points 20, card
 // backs 32 and bid dots 26, in units of u.
@@ -117,16 +117,20 @@ export function OpponentSeat({
         size={44 * u}
         ring={activity ? "active" : "none"}
         isAway={isAway || player.isKicked}
+        bot={player.bot?.difficulty}
       />
       <NameLine>
-        <Name $active={Boolean(activity)} title={player.username}>
-          {player.username}
+        <Name
+          $active={Boolean(activity)}
+          title={player.bot ? `${player.username} (Bot)` : player.username}
+        >
+          <PlayerName name={player.username} isBot={Boolean(player.bot)} />
         </Name>
         <RolePills isDealer={isDealer} isLeader={isLeader} />
       </NameLine>
       <Meta>
         {player.isKicked ? (
-          "Removed · plays itself"
+          "Removed · a bot plays"
         ) : isAway ? (
           "Reconnecting…"
         ) : (

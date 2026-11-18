@@ -1,4 +1,5 @@
 import {
+  BotDifficulty,
   ErrorCode,
   GameStatus,
   PodridaPhase,
@@ -25,7 +26,6 @@ jest.mock("../src/data/serverConfig/server-config", () => {
       dealingMaxMs: 5,
       trickEndMs: 2,
       roundSummaryMs: 2,
-      automaticMoveMs: 2,
     },
   };
 });
@@ -55,6 +55,8 @@ const seat = async (): Promise<Seat> => {
 const startGame = async (count: number) => {
   const seats = await Promise.all(Array.from({ length: count }, seat));
   const { room } = expectOk(await seats[0].socket.request("rooms:create", { name: "Test table" }));
+  // Bots (here, the seats of kicked players) don't wait to play.
+  expectOk(await seats[0].socket.request("rooms:updateSettings", { botThinkingMaxMs: 0 }));
   await Promise.all(
     seats.slice(1).map((player) => player.socket.request("rooms:join", { roomId: room.id })),
   );
@@ -114,7 +116,7 @@ describe("playing a game", () => {
 
     const { game } = expectOk(await host.socket.request("games:attach", { gameId }));
     expect(game.players.map((player) => player.isConnected)).toEqual([true, false]);
-    expect(game.state).toMatchObject({ roundNumber: 1, cardsPerPlayer: 1, roundCount: 51 });
+    expect(game.state).toMatchObject({ roundNumber: 1, cardsPerPlayer: 1, roundCount: 52 });
     expect(game.state.hand).toHaveLength(1);
 
     expectOk(await guest.socket.request("games:attach", { gameId }));
@@ -159,13 +161,14 @@ describe("playing a game", () => {
     expect(error.details).toEqual({ rule: null });
   });
 
-  test("a full game: rounds are stored, kicked seats play themselves, and it can be looked back on", async () => {
+  test("a full game: rounds are stored, a bot plays the kicked seat, and it can be looked back on", async () => {
     const { gameId, seats } = await startGame(3);
     const [host, guest, kicked] = seats;
     await Promise.all(seats.map(({ socket }) => socket.request("games:attach", { gameId })));
 
-    // The third player is kicked early: their seat plays on its own until the end.
+    // The third player is kicked early: a bot plays their seat until the end.
     expectOk(await host.socket.request("games:kick", { userId: kicked.user.id }));
+    expect((await Games.findById(gameId))?.players[2].takenOverBy).toBe(BotDifficulty.casual);
     await playToTheEnd([host, guest]);
 
     expect(host.socket.events.find((event) => event.event === "game:ended")?.payload).toEqual({
@@ -174,11 +177,11 @@ describe("playing a game", () => {
     });
     const final = latest(host.socket)!;
     expect(final.state.phase).toBe(PodridaPhase.finished);
-    expect(final.state.history).toHaveLength(33);
+    expect(final.state.history).toHaveLength(35);
 
     const record = await Games.findById(gameId);
     expect(record?.status).toBe(GameStatus.finished);
-    expect(record?.rounds).toHaveLength(33);
+    expect(record?.rounds).toHaveLength(35);
 
     // Every round is stored in full: the hands as dealt, and each trick card by card.
     record?.rounds.forEach((round) => {
@@ -212,7 +215,7 @@ describe("playing a game", () => {
     ).toBe(Object.values(final.state.totals).filter((total) => total === best).length);
 
     const details = await call("GET", `/games/finished/${gameId}`, { token: kicked.token });
-    expect(details.json).toMatchObject({ id: gameId, roundCount: 33, hostId: host.user.id });
+    expect(details.json).toMatchObject({ id: gameId, roundCount: 35, hostId: host.user.id });
     expect(details.json.rounds[0].results).toHaveLength(3);
     expect(
       details.json.rounds.at(-1).results.map((result: { total: number }) => result.total),

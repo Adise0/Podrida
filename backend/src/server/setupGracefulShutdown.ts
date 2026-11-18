@@ -3,6 +3,7 @@
 import { Server } from "node:http";
 import mongoose from "mongoose";
 import { shutdownTimeoutInSeconds } from "../data/serverConfig/server-config";
+import { closeBotPool } from "../realtime/games/gameManager";
 import { RealtimeServer } from "../realtime/socketServer";
 import logger from "./utils/logger";
 
@@ -28,6 +29,7 @@ const setupGracefulShutdown = (server: Server, realtime: RealtimeServer) => {
     try {
       // WebSockets first: they'd keep the HTTP server from closing. Clients are told to reconnect.
       await realtime.close();
+      await closeBotPool();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
         // Keep-alive connections with no request running (an open browser tab) would otherwise hold

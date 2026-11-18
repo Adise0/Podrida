@@ -1,12 +1,13 @@
 # Podrida
 
-A browser card game. One repo, three npm workspaces:
+A browser card game. One repo, four npm workspaces:
 
-| Folder      | What it is                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------- |
-| `backend/`  | Express 5 + MongoDB API: accounts, auth, sessions, admin tools (and, soon, the game server) |
-| `frontend/` | Vite + React + TypeScript app                                                               |
-| `shared/`   | `@podrida/shared`: the contract both sides agree on (endpoint paths, error codes, types)    |
+| Folder      | What it is                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| `backend/`  | Express 5 + MongoDB API: accounts, auth, sessions, admin tools and the game server               |
+| `frontend/` | Vite + React + TypeScript app                                                                    |
+| `shared/`   | `@podrida/shared`: the contract both sides agree on (endpoint paths, error codes, types)         |
+| `bots/`     | `@podrida/bots`: the computer players, run by the backend (see [bots/README.md](bots/README.md)) |
 
 The backend started from the [User-template](https://github.com/Adise0/User-template). Its own
 docs (every endpoint, environment variables, security notes) are in [backend/README.md](backend/README.md).
@@ -32,9 +33,11 @@ in `frontend/.env` (see `frontend/.env.example`). Stop each one with Ctrl+C in i
 | ---------------------- | ------------------------------------------------------------- |
 | `npm run build`        | Builds all three, in order                                    |
 | `npm run build:shared` | Builds only `shared` (the others need it built)               |
+| `npm run build:bots`   | Builds `shared`, then `bots` (the backend needs it built)     |
+| `npm run tournament`   | Bot-only tournaments, eg. `-- --a expert --b skilled`         |
 | `npm run typecheck`    | Typechecks every workspace                                    |
 | `npm run lint`         | Lints every workspace                                         |
-| `npm test`             | Runs the backend tests (in-memory MongoDB, nothing to set up) |
+| `npm test`             | Runs the bots' and the backend's tests (nothing to set up)    |
 | `npm run format`       | Formats everything with Prettier (`format:check` only checks) |
 
 Run a script in one workspace with `npm run <script> -w @podrida/backend` (or `frontend`, `shared`).
@@ -43,15 +46,16 @@ Run a script in one workspace with `npm run <script> -w @podrida/backend` (or `f
 
 | Script                   | What it does                                                    |
 | ------------------------ | --------------------------------------------------------------- |
-| `npm run dev:backend`    | Builds `shared`, then runs only the API                         |
+| `npm run dev:backend`    | Builds `shared` and `bots`, then runs only the API              |
 | `npm run dev:frontend`   | Builds `shared`, then runs only the frontend                    |
 | `npm run dev:shared`     | Rebuilds `shared` on every change (optional, a third terminal)  |
-| `npm run build:backend`  | Builds `shared`, then compiles the backend                      |
+| `npm run build:backend`  | Builds `shared` and `bots`, then compiles the backend           |
 | `npm run build:frontend` | Builds `shared`, then bundles the frontend into `frontend/dist` |
 | `npm run start:backend`  | Starts the compiled API (run `build:backend` first)             |
 
 There is no single deploy command: the two sides deploy to different places. Whatever the host,
-install at the **repo root** (`npm ci`), because both sides need `shared/`.
+install at the **repo root** (`npm ci`), because both sides need `shared/` (and the backend
+`bots/`).
 
 - **Backend** (any Node host): build with `npm run build:backend`, start with
   `npm run start:backend`, and set the environment variables from `backend/.env.example`. Or use the
@@ -80,7 +84,7 @@ messages, and the backend can't rename a code without the frontend noticing at c
 
 GitHub Actions run on pushes to `main` and on pull requests, only when something relevant changed:
 
-- `.github/workflows/backend.yml`: for `backend/**` and `shared/**`. Typechecks, lints, checks formatting and runs the tests.
+- `.github/workflows/backend.yml`: for `backend/**`, `bots/**` and `shared/**`. Typechecks, lints, checks formatting and runs the bots' and the backend's tests.
 - `.github/workflows/frontend.yml`: for `frontend/**` and `shared/**`. Lints and builds.
 
 A change to `shared/` runs both, since both depend on it.

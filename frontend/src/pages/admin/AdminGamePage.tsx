@@ -1,4 +1,4 @@
-import type { AdminGame, AdminGamePlayer } from "@podrida/shared";
+import { botDifficultyLabels, type AdminGame, type AdminGamePlayer } from "@podrida/shared";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import styled from "styled-components";
@@ -72,6 +72,8 @@ function PlayerState({ player, game }: { player: AdminGamePlayer; game: AdminGam
           {formatDateTime(player.kickedAt)}
           {/* A kicker who isn't a player can only have been an admin. */}
           {by ? ` by ${by.username}` : " by an admin"}
+          {player.takenOverBy &&
+            `. A ${botDifficultyLabels[player.takenOverBy]} bot played the seat from then on.`}
         </MutedText>
       </Stack>
     );
@@ -181,7 +183,14 @@ export function AdminGamePage() {
                 {game.players.map((player) => (
                   <tr key={player.userId}>
                     <td>
-                      <RowLink to={`/admin/users/${player.userId}`}>{player.username}</RowLink>{" "}
+                      {player.bot ? (
+                        <span>
+                          {player.username}{" "}
+                          <Badge>Bot · {botDifficultyLabels[player.bot.difficulty]}</Badge>
+                        </span>
+                      ) : (
+                        <RowLink to={`/admin/users/${player.userId}`}>{player.username}</RowLink>
+                      )}{" "}
                       {player.userId === game.hostId && <Badge $tone="warning">Host</Badge>}
                     </td>
                     <td>{player.total}</td>
@@ -189,7 +198,7 @@ export function AdminGamePage() {
                       <PlayerState player={player} game={game} />
                     </td>
                     <ActionCell>
-                      {game.isLive && !player.kickedAt && (
+                      {game.isLive && !player.kickedAt && !player.bot && (
                         <Button
                           variant="ghost"
                           small

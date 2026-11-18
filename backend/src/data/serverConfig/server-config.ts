@@ -1,4 +1,5 @@
 // This file contains the basic configuration parameters of the server
+import { availableParallelism } from "node:os";
 
 // The product's name, as users see it: in every email, and next to the code in authenticator apps.
 export const appName = "Podrida";
@@ -99,8 +100,15 @@ export const gameTimings = {
   dealingMaxMs: 2100,
   trickEndMs: 1600, // The winner shown (1.2s), then the cards slide to them (0.4s).
   roundSummaryMs: 4500,
-  automaticMoveMs: 800, // A kicked player's seat plays itself after this.
 };
+
+// BOTS (the computer players, @podrida/bots). Each decision runs in a worker thread so a search
+// never blocks the server. The thinking delay players see is a room setting (RoomSettings).
+export const botWorkerThreads = Math.max(1, Math.min(4, availableParallelism() - 1));
+export const botDecisionTimeoutMs = 5000; // A stuck worker is replaced; the seat plays a simple move.
+// Of the room's maximum thinking time: the shortest wait, and the wait on a forced move.
+export const botThinkingMinFraction = 0.5;
+export const botForcedMoveFraction = 0.25;
 
 // EMAIL DELIVERY
 export const emailMaxAttempts = 3; // Tries per email before giving up.

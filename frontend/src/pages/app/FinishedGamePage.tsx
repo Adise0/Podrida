@@ -65,7 +65,11 @@ export function FinishedGamePage() {
   }
 
   // The local player first, then the seat order, like in the game.
-  const seats = game.players.map((player, seat) => ({ ...player, seat }));
+  const seats = game.players.map((player, seat) => ({
+    ...player,
+    seat,
+    bot: player.bot?.difficulty,
+  }));
   const mine = seats.findIndex((player) => player.userId === user.id);
   const ordered = mine === -1 ? seats : [...seats.slice(mine), ...seats.slice(0, mine)];
   const totals = Object.fromEntries(game.players.map((player) => [player.userId, player.total]));
@@ -96,7 +100,12 @@ export function FinishedGamePage() {
         <StandingsStrip players={ordered} totals={totals} meId={user.id} />
         <ScoreTable
           players={ordered}
-          schedule={roundSchedule(game.players.length)}
+          schedule={
+            // As it was played: games from before a schedule change keep theirs.
+            game.rounds.length === game.roundCount
+              ? game.rounds.map((round) => round.cardsPerPlayer)
+              : roundSchedule(game.players.length)
+          }
           history={game.rounds}
           current={null}
           totals={totals}

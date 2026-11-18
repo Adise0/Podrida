@@ -58,7 +58,7 @@ const U = {
   barPadding: 24,
   edge: 20, // Seats from the frame's sides.
   tablePad: 10,
-  seatWidth: 140,
+  seatWidth: 164, // "Montserrat (Bot)": the longest bot name with its label.
   seatContent: 154, // Avatar 44, name 18, points 20, card backs 32, bid dots 26, and the gaps.
   slot: 24,
   slotGap: 4,

@@ -50,11 +50,12 @@ export const fullDeck = (): Card[] =>
 export const maxCardsPerPlayer = (playerCount: number) =>
   52 % playerCount === 0 ? 52 / playerCount : Math.floor(51 / playerCount);
 
-// Cards per player in each round: 1, 2... max... 2, 1.
+// Cards per player in each round: 1, 2... up to the max, one round at the max per player (so each
+// deals one), then back down to 1. With 4 players: 1-12, four rounds of 13, 12-1.
 export const roundSchedule = (playerCount: number): number[] => {
   const max = maxCardsPerPlayer(playerCount);
-  const up = Array.from({ length: max }, (_, index) => index + 1);
-  return [...up, ...up.slice(0, -1).reverse()];
+  const up = Array.from({ length: max - 1 }, (_, index) => index + 1);
+  return [...up, ...Array.from({ length: playerCount }, () => max), ...up.reverse()];
 };
 
 // Every card is dealt: no trump card stays on the table (its suit is picked before dealing).
