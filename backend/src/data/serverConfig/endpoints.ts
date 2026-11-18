@@ -4,6 +4,7 @@ export {
   oauthEndpoints,
   twoFactorEndpoints,
   userEndpoints,
+  gameEndpoints,
   adminEndpoints,
   healthEndpoints,
   metricsEndpoints,

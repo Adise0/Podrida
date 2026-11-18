@@ -226,6 +226,82 @@ the frontend can offer as the avatar. The files are stored on the user document 
 them unless it asks (`select: false`). They're deleted along with the account, pending accounts
 included.
 
+### Rooms, games and the realtime connection
+
+The lobby and the games run over one WebSocket per tab, at `/ws` on the API's port. The whole
+protocol (every request, reply and event, with their payloads) is typed in
+[realtime.ts](../shared/src/realtime.ts) in `@podrida/shared`. In short:
+
+- The client sends requests `{ id, type, payload }`, and the server answers each one with a reply
+  `{ kind: "reply", id, ok, payload | error }`. Errors are the same `ResponseError`s as REST, with
+  the same codes.
+- The server pushes events `{ kind: "event", event, payload }` on its own: lobby changes, room
+  changes, game changes.
+- The first request is `session:auth` with the session token. Browsers can't set headers on a
+  WebSocket, and a token in the URL would end up in logs. The connection closes (`4001`) when that
+  token expires, so send `session:auth` again with every refreshed token. Revoking sessions (sign
+  out everywhere, a password change, disabling the account...) closes the affected connections
+  right away, through [sessionEvents.ts](src/server/utils/auth/sessionEvents.ts).
+- The origin is checked against `CORS_ORIGINS` / `FRONTEND_URL`, since CORS doesn't cover
+  WebSockets. Each connection is rate limited, a user can have 5 open at once, and the server pings
+  every 30 seconds to drop dead ones. The limits are in server-config.ts.
+
+**Rooms** are the lobby's tables: anyone can create one, join it while it isn't full, and leave.
+They live only in memory ([roomManager.ts](src/realtime/rooms/roomManager.ts)). They change
+constantly and nothing about them is worth keeping until they start. A user sits at one room or one
+game at a time. When the host leaves, the longest-seated member becomes host, and an empty room
+closes. A member whose connections all drop keeps their seat for `roomReconnectGraceInSeconds`, so a
+page reload doesn't kick anyone.
+
+**Games** start when the host sends `rooms:start` with at least `roomLimits.minPlayers` seated. The
+game is stored in the `games` collection right away ([Games.ts](src/database/models/Games.ts):
+room name, host, players, status), and it's played as a live object in memory
+([gameManager.ts](src/realtime/games/gameManager.ts)).
+
+**The rules** are in [podrida.ts](../shared/src/podrida.ts) in `@podrida/shared`: the round
+schedule, which cards may be played, who takes a trick, and the scoring. They're pure functions, so
+the server enforces them and the frontend uses the very same ones to darken the cards that can't be
+played and write the hints. [PodridaMatch.ts](src/realtime/games/PodridaMatch.ts) runs one game on
+top of them: it deals, takes the bids (`games:bid`) and the cards (`games:play`), and refuses
+anything out of turn, out of phase or against the rules (`NOT_YOUR_TURN`, `WRONG_PHASE`,
+`INVALID_BID`, `CARD_NOT_PLAYABLE` with the rule in `details.rule`).
+
+The game manager sets the pace. The timed phases (the deal, a finished trick on the table, the
+round summary) last `gameTimings` in server-config.ts, so every player sees the same thing at the
+same time. Each player gets their own `game:updated`, with their own hand and only the size of the
+others' hands. Every scored round is stored on the record (`rounds`, and each player's `total`),
+so a game cut short keeps its rounds. A player counts as connected to the game while one of their
+tabs has the game page open (`games:attach`, until `games:detach` or the tab closes). On their
+turn, the game waits for them.
+
+Players can't leave a game. It ends on its own after the last round (`FINISHED`), or early:
+
+| Status        | When                                                                        |
+| ------------- | --------------------------------------------------------------------------- |
+| `ENDED_EARLY` | The host sent `games:end`, or an admin ended it. `endedBy` records who      |
+| `ABANDONED`   | No player was connected for `gameAbandonAfterSeconds`                       |
+| `INTERRUPTED` | It was still running when the server started again: its live state was lost |
+
+The host can kick players (`games:kick`), but not themselves. A kicked player's seat stays, and
+plays itself: it bids 0 and plays its lowest playable card. The record keeps `kickedAt` and
+`kickedBy`, and they're free to join another room.
+
+Players look back on their own finished games over REST: `GET /games/finished` (paginated, with
+each player's final points and the winners) and `GET /games/finished/:gameId` (every round's bids
+and scores). Anyone who didn't play a game gets a 404 for it.
+
+Admins see every game under `/admin/games` (filter by `status` or `playerId`). On a game being
+played they can force-end it (`POST /admin/games/:gameId/end`) and kick anyone, the host included
+(`POST /admin/games/:gameId/players/:userId/kick`). Kicking the host passes the seat to the next
+player still in the game. Kicking the last one ends it. Both actions go to the admin audit log.
+
+To add a request (eg. a game move), declare it in `SocketRequests` in realtime.ts, then register it
+in [realtimeRouter.ts](src/realtime/realtimeRouter.ts) with a Joi schema for its payload, the way
+REST routes have body validators. Handlers throw `ControlledError`s and return the reply's payload.
+
+All of this is per server process. Running several instances needs the rooms, games and connection
+registry in a shared store (eg. Redis), with sticky sessions or pub/sub between instances.
+
 ### Email links
 
 Each email link is a signed token for one purpose, and it only works on the matching endpoint. The
@@ -297,6 +373,7 @@ src/
     joiObjects/     Request validation schemas
     serverConfig/   Endpoints, settings and environment validation
   database/         Connection and models
+  realtime/         The WebSocket server, its router and handlers, the rooms and the live games
   server/
     controllers/    The final step of each route
     middlewares/    Auth, OAuth, validation, rate limits, metrics and error handling
@@ -323,11 +400,13 @@ headers aren't logged, and tokens in URLs are masked.
 Set `METRICS_TOKEN` to turn on `GET /metrics`, in Prometheus format. The scraper sends the token as
 `Authorization: Bearer <METRICS_TOKEN>`. Without the variable the endpoint doesn't exist.
 
-| Metric                          | What it says                                                    |
-| ------------------------------- | --------------------------------------------------------------- |
-| `http_request_duration_seconds` | Requests and their latency, by method, route and status code    |
-| `emails_sent_total`             | Emails sent and failed, the only place background failures show |
-| `process_*`, `nodejs_*`         | CPU, memory, event loop lag, garbage collection                 |
+| Metric                              | What it says                                                    |
+| ----------------------------------- | --------------------------------------------------------------- |
+| `http_request_duration_seconds`     | Requests and their latency, by method, route and status code    |
+| `emails_sent_total`                 | Emails sent and failed, the only place background failures show |
+| `realtime_request_duration_seconds` | Realtime requests and their latency, by type and result         |
+| `realtime_live`                     | Open connections, lobby rooms and live games, by `kind`         |
+| `process_*`, `nodejs_*`             | CPU, memory, event loop lag, garbage collection                 |
 
 The route label is the pattern (`/admin/users/:userId`), never the real URL. Requests refused before
 reaching a route (unknown paths, a missing token on a router-wide guard) are counted as `unmatched`.
@@ -356,7 +435,9 @@ for a page admins can search or for retention rules, write them from
 Before going live, go through the checklist at the top of
 [SECURITY_SETTINGS.md](SECURITY_SETTINGS.md). Set `NODE_ENV=production` for plain JSON logs.
 
-Stop the server with `SIGTERM` or `SIGINT` so running requests can finish. `GET /health` answers
+Stop the server with `SIGTERM` or `SIGINT` so running requests can finish. Open WebSockets are
+closed with `1001`, which tells the clients to reconnect. A proxy in front of the API has to pass
+WebSocket upgrades through on `/ws`. `GET /health` answers
 `503` if the database connection is lost.
 
 ## Upgrading a database from an older version of this template

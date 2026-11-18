@@ -5,12 +5,19 @@ import os from "node:os";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import Games from "../../src/database/models/Games";
 import Users from "../../src/database/models/Users";
+import { resetLiveGames } from "../../src/realtime/games/gameManager";
+import { resetRooms } from "../../src/realtime/rooms/roomManager";
+import attachRealtime, { RealtimeServer } from "../../src/realtime/socketServer";
 import app from "../../src/server";
 import { mailbox, resetMailbox } from "./fakeNodemailer";
 
 let server: Server;
+let realtime: RealtimeServer | undefined;
 let baseUrl = "";
+
+export const getBaseUrl = () => baseUrl;
 let ipCounter = 0;
 let userCounter = 0;
 
@@ -32,17 +39,21 @@ export const useApi = () => {
     await new Promise<void>((resolve) => {
       server = app.listen(0, "127.0.0.1", () => resolve());
     });
+    realtime = attachRealtime(server);
     baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   });
 
   beforeEach(async () => {
-    await Users.deleteMany({});
+    await Promise.all([Users.deleteMany({}), Games.deleteMany({})]);
+    resetRooms();
+    resetLiveGames();
     resetMailbox();
   });
 
   afterAll(async () => {
     // If the setup failed there's no server, and crashing here would hide the real error.
     if (server) {
+      await realtime?.close();
       server.closeAllConnections();
       await new Promise((resolve) => {
         server.close(resolve);

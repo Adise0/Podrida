@@ -10,6 +10,8 @@ import connectToDB from "./database";
 import validateEnv from "./data/serverConfig/validateEnv";
 import setupGracefulShutdown from "./server/setupGracefulShutdown";
 import logger from "./server/utils/logger";
+import attachRealtime from "./realtime/socketServer";
+import { interruptStaleGames } from "./realtime/games/gameManager";
 
 // Environment variable grab
 const port = process.env.PORT || "4000";
@@ -21,8 +23,10 @@ const connectionString = process.env.CONN_STRING;
     validateEnv(); // Stop right here if the configuration is broken
     logger.info("Starting server...");
     await connectToDB(connectionString); // Connect first, a server without its DB can't answer anything
+    await interruptStaleGames(); // Games live in memory, so the ones from before a restart are over
     const server = await startServer(port, app); // Start the server
-    setupGracefulShutdown(server);
+    const realtime = attachRealtime(server); // WebSockets, on the same port
+    setupGracefulShutdown(server, realtime);
   } catch (error) {
     // Straight to the console, so it's shown whatever the log level, and the process goes down
     // instead of staying up broken.

@@ -3,9 +3,15 @@ import { AppLayout } from "../layouts/AppLayout";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { AdminRootLayout, RootLayout } from "../layouts/RootLayouts";
 import { adminRoles } from "../lib/permissions";
+import { AdminGamePage } from "../pages/admin/AdminGamePage";
+import { AdminGamesPage } from "../pages/admin/AdminGamesPage";
 import { AdminUserPage } from "../pages/admin/AdminUserPage";
 import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
+import { GamePage } from "../pages/app/GamePage";
+import { FinishedGamePage } from "../pages/app/FinishedGamePage";
+import { FinishedGamesPage } from "../pages/app/FinishedGamesPage";
 import { HomePage } from "../pages/app/HomePage";
+import { RoomPage } from "../pages/app/RoomPage";
 import { ProfilePage } from "../pages/app/ProfilePage";
 import { SecurityPage } from "../pages/app/security/SecurityPage";
 import { CheckEmailPage } from "../pages/auth/CheckEmailPage";
@@ -22,6 +28,7 @@ import {
   RevokeOtpPage,
 } from "../pages/emailLinks/EmailLinkPages";
 import { ResetPasswordPage } from "../pages/emailLinks/ResetPasswordPage";
+import { GamePreviewPage } from "../pages/dev/GamePreviewPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { GuestOnly, RequireAuth, RequireRole } from "./guards";
 
@@ -64,10 +71,15 @@ export const router = createBrowserRouter([
       {
         element: <RequireAuth />,
         children: [
+          // The game screen has the whole window to itself (desktop only).
+          { path: "games/:gameId", element: <GamePage /> },
           {
             element: <AppLayout />,
             children: [
               { index: true, element: <HomePage /> },
+              { path: "rooms/:roomId", element: <RoomPage /> },
+              { path: "games/finished", element: <FinishedGamesPage /> },
+              { path: "games/finished/:gameId", element: <FinishedGamePage /> },
               { path: "account", element: <ProfilePage /> },
               { path: "account/security", element: <SecurityPage /> },
               {
@@ -80,6 +92,8 @@ export const router = createBrowserRouter([
                       { index: true, element: <Navigate to="users" replace /> },
                       { path: "users", element: <AdminUsersPage /> },
                       { path: "users/:userId", element: <AdminUserPage /> },
+                      { path: "games", element: <AdminGamesPage /> },
+                      { path: "games/:gameId", element: <AdminGamePage /> },
                     ],
                   },
                 ],
@@ -88,6 +102,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
+
+      // Dev only: the game screen with a made-up game, to check the layout (see the page).
+      ...(import.meta.env.DEV ? [{ path: "dev/game-preview", element: <GamePreviewPage /> }] : []),
 
       { path: "*", element: <NotFoundPage /> },
     ],

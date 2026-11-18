@@ -75,6 +75,33 @@ export const twoFactorChallengeExpirationInMinutes = 5; // Time to type the code
 export const twoFactorMaxAttempts = 5; // Wrong codes per login before it has to start over.
 export const twoFactorBackupCodeCount = 10;
 
+// REALTIME (the WebSocket at realtimePath, see realtime.ts in @podrida/shared)
+export const socketAuthTimeoutInSeconds = 10; // Time to send "session:auth" after connecting.
+export const socketHeartbeatIntervalInSeconds = 30; // A connection that misses a ping is dropped.
+export const socketMaxMessageBytes = 16 * 1024;
+export const socketMaxConnectionsPerUser = 5; // Tabs open at once.
+// Requests per connection: a burst of socketRateLimitBurst, refilled at socketRateLimitPerSecond.
+export const socketRateLimitBurst = 20;
+export const socketRateLimitPerSecond = 10;
+
+// ROOMS AND GAMES (the room size limits are in roomLimits, in @podrida/shared)
+// How long a member whose connections all dropped keeps their seat. Long enough for a page reload
+// or a flaky network.
+export const roomReconnectGraceInSeconds = 30;
+// A game nobody is connected to anymore is abandoned after this long.
+export const gameAbandonAfterSeconds = 5 * 60;
+
+// The pace of a game: how long each timed phase lasts, for everyone to see what happened. They
+// match the frontend's animations (frontend/src/game/timing.ts).
+export const gameTimings = {
+  dealingBaseMs: 600, // Plus dealingPerCardMs per card, up to dealingMaxMs: the deal animation.
+  dealingPerCardMs: 60,
+  dealingMaxMs: 2100,
+  trickEndMs: 1600, // The winner shown (1.2s), then the cards slide to them (0.4s).
+  roundSummaryMs: 4500,
+  automaticMoveMs: 800, // A kicked player's seat plays itself after this.
+};
+
 // EMAIL DELIVERY
 export const emailMaxAttempts = 3; // Tries per email before giving up.
 export const emailRetryDelayInSeconds = 2; // Grows with each attempt: 2s, then 4s...

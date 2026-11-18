@@ -6,6 +6,7 @@ import getMetrics from "../controllers/health/getMetrics";
 import method, { Methods } from "../middlewares/method";
 import adminRouter from "./admin";
 import authRouter from "./auth";
+import gamesRouter from "./games";
 import oauthRouter from "./oauth";
 import twoFactorRouter from "./twoFactor";
 import usersRouter from "./users";
@@ -29,6 +30,7 @@ if (twoFactorAuthEnabled) {
 
 mainRouter.use(endpoints.auth.path, authRouter);
 mainRouter.use(endpoints.users.path, usersRouter);
+mainRouter.use(endpoints.games.path, gamesRouter);
 mainRouter.use(endpoints.admin.path, adminRouter);
 
 export default mainRouter;

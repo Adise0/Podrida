@@ -9,6 +9,7 @@ import hashPassword from "../../utils/auth/hashPassword";
 import clearOtp from "../../utils/auth/clearOtp";
 import sendSecurityNotice from "../../utils/email/sendSecurityNotice";
 import hashToken from "../../utils/auth/hashToken";
+import { notifySessionsChanged } from "../../utils/auth/sessionEvents";
 
 const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
   const { userId, token } = res.locals; // Grab the userId and raw token left by the signedIdTokenValidator.
@@ -51,6 +52,7 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction) =>
     foundUser.tokenVersion += 1;
 
     await foundUser.save();
+    notifySessionsChanged(foundUser.id); // Closes its open connections.
 
     sendSecurityNotice(
       foundUser.credentials.email,

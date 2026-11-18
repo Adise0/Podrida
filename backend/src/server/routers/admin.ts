@@ -6,6 +6,10 @@ import deleteUser from "../controllers/admin/deleteUser";
 import disableUser from "../controllers/admin/disableUser";
 import enableUser from "../controllers/admin/enableUser";
 import forcePasswordReset from "../controllers/admin/forcePasswordReset";
+import endGame from "../controllers/admin/games/endGame";
+import getGame from "../controllers/admin/games/getGame";
+import getGames from "../controllers/admin/games/getGames";
+import kickGamePlayer from "../controllers/admin/games/kickGamePlayer";
 import getUser from "../controllers/admin/getUser";
 import getUsers from "../controllers/admin/getUsers";
 import resetTwoFactor from "../controllers/admin/resetTwoFactor";
@@ -20,6 +24,8 @@ import {
   updateProfileDataValidator,
   userRoleDataValidator,
 } from "../middlewares/requestPayloadValidators/bodyValidators";
+import gameListDataValidator from "../middlewares/requestPayloadValidators/gameListDataValidator";
+import getGameDataValidator from "../middlewares/requestPayloadValidators/getGameDataValidator";
 import getUserDataValidator from "../middlewares/requestPayloadValidators/getUserDataValidator";
 import userListDataValidator from "../middlewares/requestPayloadValidators/userListDataValidator";
 
@@ -92,6 +98,21 @@ adminRouter.all(
   manageableUserValidator,
   userRoleDataValidator,
   changeUserRole,
+);
+
+// GAMES. Ending a game and kicking only work on games being played (GAME_NOT_FOUND otherwise).
+
+adminRouter.all(routerEndpoints.games, method(Methods.GET), gameListDataValidator, getGames);
+
+adminRouter.all(routerEndpoints.game, method(Methods.GET), getGameDataValidator, getGame);
+
+adminRouter.all(routerEndpoints.endGame, method(Methods.POST), getGameDataValidator, endGame);
+
+adminRouter.all(
+  routerEndpoints.kickPlayer,
+  method(Methods.POST),
+  getGameDataValidator,
+  kickGamePlayer,
 );
 
 export default adminRouter;

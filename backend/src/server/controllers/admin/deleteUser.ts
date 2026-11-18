@@ -1,12 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import sendSecurityNotice from "../../utils/email/sendSecurityNotice";
 import logAdminAction from "../../utils/logAdminAction";
+import { notifySessionsChanged } from "../../utils/auth/sessionEvents";
 
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   const { targetUser } = res.locals; // Grab the user left by the manageableUserValidator.
 
   try {
     await targetUser.deleteOne();
+    notifySessionsChanged(targetUser.id); // Closes its open connections.
 
     logAdminAction(req, res, "deleteUser");
 

@@ -1,4 +1,5 @@
 // The admin side of the contract (everything under /admin).
+import type { GameStatus } from "./rooms";
 import type { MyUser, UserRole } from "./user";
 
 // What an admin gets to see of a user (dates are ISO strings).
@@ -35,4 +36,44 @@ export interface AdminUserListResponse {
 // SUPERUSER can't be granted through the API.
 export interface ChangeUserRoleData {
   role: UserRole.user | UserRole.admin;
+}
+
+// GAMES
+
+export interface AdminGamePlayer {
+  userId: string;
+  username: string; // As it was when the game started.
+  kickedAt?: string;
+  kickedBy?: string; // A user id: the host or an admin.
+  total: number; // Points so far.
+  isConnected?: boolean; // Only while the game is being played.
+}
+
+// A game's record, with what's live about it while it's being played.
+export interface AdminGame {
+  id: string;
+  roomName: string;
+  hostId: string;
+  players: AdminGamePlayer[];
+  status: GameStatus;
+  isLive: boolean; // Being played on this server right now: it can be ended and players kicked.
+  startedAt: string;
+  endedAt?: string;
+  endedBy?: { userId: string; username: string }; // Who ended it early.
+}
+
+// GET /admin/games query string. playerId only lists the games that user sat at.
+export interface AdminGameListQuery {
+  page?: number;
+  limit?: number; // At most 100.
+  status?: GameStatus;
+  playerId?: string;
+}
+
+export interface AdminGameListResponse {
+  games: AdminGame[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }

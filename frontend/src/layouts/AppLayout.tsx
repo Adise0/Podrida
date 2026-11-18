@@ -5,6 +5,7 @@ import { Avatar } from "../components/Avatar";
 import { Brand } from "../components/Brand";
 import { Button } from "../components/ui/Button";
 import { useRequest } from "../hooks/useRequest";
+import { usePlay } from "../stores/play/store";
 import { logout } from "../stores/session/actions";
 import { useUser } from "../stores/user/store";
 
@@ -72,11 +73,29 @@ const Main = styled.main`
   }
 `;
 
+const ConnectionBanner = styled.div`
+  padding: ${({ theme }) => `${theme.space(2)} ${theme.space(4)}`};
+  background: ${({ theme }) => theme.colors.warningSoft};
+  color: ${({ theme }) => theme.colors.warning};
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+`;
+
 const adminRoles = [UserRole.admin, UserRole.superuser];
 
 export function AppLayout() {
   const { user } = useUser();
+  const play = usePlay();
   const signOut = useRequest(logout);
+
+  // Only once it has been up: the first connect is too quick to be worth a banner.
+  const connectionNotice =
+    play.status === "blocked"
+      ? "Podrida is open in too many tabs. Close one and reload this page to play here."
+      : play.status === "connecting" && play.hasBeenOnline
+        ? "Connection lost. Reconnecting…"
+        : null;
 
   return (
     <>
@@ -104,6 +123,7 @@ export function AppLayout() {
           </Account>
         </HeaderInner>
       </Header>
+      {connectionNotice && <ConnectionBanner role="status">{connectionNotice}</ConnectionBanner>}
       <Main>
         <Outlet />
       </Main>

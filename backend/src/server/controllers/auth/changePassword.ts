@@ -4,6 +4,7 @@ import { getUserNotFoundForIdError } from "../../../data/errorObjects/userErrors
 import hashPassword from "../../utils/auth/hashPassword";
 import clearOtp from "../../utils/auth/clearOtp";
 import sendSecurityNotice from "../../utils/email/sendSecurityNotice";
+import { notifySessionsChanged } from "../../utils/auth/sessionEvents";
 
 // Changes the password of the logged in user. The current password isn't asked for: the chain in
 // front of this (tokenValidator + freshAuthValidator) already demands a session from a recent login.
@@ -35,6 +36,7 @@ const changePassword = async (req: Request, res: Response, next: NextFunction) =
     }
 
     await foundUser.save();
+    notifySessionsChanged(foundUser.id); // Closes its open connections.
 
     sendSecurityNotice(
       foundUser.credentials.email,
