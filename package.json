@@ -27,7 +27,8 @@
     "test": "npm run test --workspaces --if-present",
     "tournament": "npm run tournament -w @podrida/bots --",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "heroku-postbuild": "npm run build:backend"
   },
   "devDependencies": {
     "prettier": "^3.9.9"
